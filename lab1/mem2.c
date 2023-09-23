@@ -12,7 +12,7 @@ void func(int * a)
 
 	m = 64;
 	n = len / m;
-	int mem_access = 0;
+	int mem_access = 0; // track how often a[i*m+j]++ is called
     // printf("m: %i n: %i", m, n);
 
 	for(j=0; j<m; j++){		

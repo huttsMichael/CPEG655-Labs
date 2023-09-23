@@ -7,18 +7,19 @@ static unsigned len = (8 << 20);
 void func(int * a)
 {
 	int i,j;
-    int mem_access = 0;
+    int mem_access = 0; // track how often a[i+j]++ is called
     // for(i=0; i<len; i+=4){
-	for(i=0; i<64; i++){
-        // a[i]++;
-		// for(j=63; j>=0; j--){
+    /*
+     my original less dramatic changes were to simply to swap i and j's bounds,
+     but switching to 64-byte jumps had a far greater effect than 4.
+    */
+	for(i=0; i<64; i++){ 
+		// for(j=63; j>=0; j--){ // very first concept, did not work
         // for(j=0; j<4; j++){  
         for(j=0; j<len; j+=64){    
             // printf("%d\n", i+j);
-            // printf("%d\n", len-i+j);
 			a[i+j]++;
             mem_access++;
-            // a[len-i+j]++;
 		}
 	}
 
@@ -36,7 +37,7 @@ int main()
 
     int nEvents, retval;
     int EventSet = PAPI_NULL;
-    int events[] = {PAPI_TOT_CYC, PAPI_L2_TCM}; //, PAPI_L2_TCM};
+    int events[] = {PAPI_L2_TCM, PAPI_TLB_DM}; //, PAPI_L2_TCM};
     long_long values[] = {0, 0};
     char eventLabel[PAPI_MAX_STR_LEN];
 
