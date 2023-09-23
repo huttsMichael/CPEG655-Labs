@@ -8,10 +8,10 @@ void func(int * a)
 {
 	int i,j;
 
-	for(i=0; i<len; i+=64){
+	for(i=0; i<4; i++){
         // a[i]++;
-		// for(j=64; j>=0; j--){
-        for(j=0; j<64; j++){    
+		// for(j=63; j>=0; j--){
+        for(j=0; j<len; j+=4){    
             // printf("%d\n", i+j);
             // printf("%d\n", len-i+j);
 			a[i+j]++;
@@ -27,12 +27,13 @@ int eventnum = 1;
 
 int main()
 {
+    printf("new: ");
 	int * a;
 	int i;
 
     int nEvents, retval;
     int EventSet = PAPI_NULL;
-    int events[] = {PAPI_TOT_CYC}; //, PAPI_L2_TCM};
+    int events[] = {PAPI_TOT_CYC, PAPI_L2_TCM}; //, PAPI_L2_TCM};
     long_long values[] = {0, 0};
     char eventLabel[PAPI_MAX_STR_LEN];
 
