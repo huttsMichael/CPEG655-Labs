@@ -12,22 +12,26 @@ void func(int * a)
 
 	m = 16;
 	n = len / m;
-	
+	int mem_access = 0;
+    
 	for(j=0; j<m; j++){		
 		for(i=0; i<n; i++){
 			a[i*m+j]++;
+            mem_access++;
 		}
 	}
+    printf("memory accesses: %i \t", mem_access);
 }
 
 int main()
 {
+    printf("(modified)\t");
 	int * a;
 	int i;
 
 	int nEvents, retval;
     int EventSet = PAPI_NULL;
-    int events[] = {PAPI_L2_DCM}; //, PAPI_L2_TCM};
+    int events[] = {PAPI_L2_DCM, PAPI_TLB_DM}; //, PAPI_L2_TCM};
     long_long values[] = {0, 0};
     char eventLabel[PAPI_MAX_STR_LEN];
 
