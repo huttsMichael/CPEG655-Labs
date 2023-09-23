@@ -10,10 +10,11 @@ void func(int * a)
 
 	int m, n;
 
-	m = 16;
+	m = 64;
 	n = len / m;
 	int mem_access = 0;
-    
+    // printf("m: %i n: %i", m, n);
+
 	for(j=0; j<m; j++){		
 		for(i=0; i<n; i++){
 			a[i*m+j]++;
