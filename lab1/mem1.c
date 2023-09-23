@@ -8,15 +8,15 @@ void func(int * a)
 {
 	int i,j;
     int mem_access = 0; // track how often a[i+j]++ is called
-    // for(i=0; i<len; i+=4){
+    
     /*
      my original less dramatic changes were to simply to swap i and j's bounds,
      but switching to 64-byte jumps had a far greater effect than 4.
     */
+    // for(i=0; i<len; i+=4){
 	for(i=0; i<64; i++){ 
         // for(j=0; j<4; j++){  
-        for(j=0; j<len; j+=64){    
-            // printf("%d\n", i+j);
+        for(j=0; j<len; j+=64){
 			a[i+j]++;
             mem_access++;
 		}
@@ -30,7 +30,7 @@ int eventnum = 1;
 
 int main()
 {
-    printf("(original)\t");
+    printf("(modified)\t");
 	int * a;
 	int i;
 
