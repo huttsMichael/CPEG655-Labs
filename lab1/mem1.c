@@ -7,19 +7,22 @@ static unsigned len = (8 << 20);
 void func(int * a)
 {
 	int i,j;
-
-	for(i=0; i<4; i++){
+    int mem_access = 0;
+    // for(i=0; i<len; i+=4){
+	for(i=0; i<64; i++){
         // a[i]++;
 		// for(j=63; j>=0; j--){
-        for(j=0; j<len; j+=4){    
+        // for(j=0; j<4; j++){  
+        for(j=0; j<len; j+=64){    
             // printf("%d\n", i+j);
             // printf("%d\n", len-i+j);
 			a[i+j]++;
+            mem_access++;
             // a[len-i+j]++;
 		}
 	}
 
-    // printf("^edited");
+    printf("memory accesses: %i \t", mem_access);
 }
 
 int events[1] = {PAPI_TOT_CYC}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
@@ -27,7 +30,7 @@ int eventnum = 1;
 
 int main()
 {
-    printf("new: ");
+    printf("(modified)\t");
 	int * a;
 	int i;
 
