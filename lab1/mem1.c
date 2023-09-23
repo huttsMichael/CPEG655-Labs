@@ -14,7 +14,6 @@ void func(int * a)
      but switching to 64-byte jumps had a far greater effect than 4.
     */
 	for(i=0; i<64; i++){ 
-		// for(j=63; j>=0; j--){ // very first concept, did not work
         // for(j=0; j<4; j++){  
         for(j=0; j<len; j+=64){    
             // printf("%d\n", i+j);
@@ -31,7 +30,7 @@ int eventnum = 1;
 
 int main()
 {
-    printf("(modified)\t");
+    printf("(original)\t");
 	int * a;
 	int i;
 
