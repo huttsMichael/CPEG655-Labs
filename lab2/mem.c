@@ -27,7 +27,7 @@ void func(Mem * a)
 }
 
 /* Please add your events here */
-int events[1] = {PAPI_TLB_DM}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
+int events[1] = {PAPI_L2_DCM}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
 int eventnum = 1;
 
 int main()
