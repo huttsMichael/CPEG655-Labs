@@ -1,3 +1,5 @@
+/* Note: this isn't used in the report but this is an alternative
+  if my original understanding on node profiling is incorrect */
 #include <stdio.h>
 #include <stdlib.h>
 
