@@ -14,10 +14,10 @@ static unsigned t1, t2, t3;
 
 typedef struct s1 {
   int a;
-  int b;
+  int e;
+  int b; // Keep b separate if it's not related to a.a and a.e
   int c;
   int d;
-  int e;
 } s1;
 
 static s1 *a;
