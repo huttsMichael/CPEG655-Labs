@@ -4,7 +4,7 @@
 #include <papi.h>
 
 /* Please add your event here */
-int events[1] = {PAPI_TOT_CYC}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
+int events[1] = {PAPI_L2_DCM}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
 long long values[1];
 int eventset;
 int nEvents, retval;
@@ -93,8 +93,8 @@ int main() {
 
   srandom(0);
 
-  input1();
-  /* input2(); */
+  // input1();
+  input2();
 
   if ((retval = PAPI_start(eventset)) != PAPI_OK) {
     fprintf(stderr, "PAPI failed to start counters: %s\n",
