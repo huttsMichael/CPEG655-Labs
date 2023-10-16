@@ -83,8 +83,8 @@ int main() {
 
   srandom(0);
 
-  input1();
-  // input2();
+  // input1();
+  input2();
 
   if ((retval = PAPI_start(eventset)) != PAPI_OK) {
     fprintf(stderr, "PAPI failed to start counters: %s\n",
