@@ -81,7 +81,7 @@ static inline void func(int cond1, int cond2, int cond3) {
 }
 
 void show_path() {
-  printf("Edge Traversal:\n");
+  printf("Path Traversal:\n");
   for (int i = 0; i < NUM_PATHS; i++) {
     printf("\tPath %i: %i\n", i, paths[i]);
   }
