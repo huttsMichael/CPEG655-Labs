@@ -14,6 +14,9 @@ int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
 
+// Misc constants
+int current_N = 64; // 1048576
+
 struct p {
     int v;
     struct p * left;
@@ -131,7 +134,6 @@ void* workload(void* arg) {
 int main() {
     srand(time(NULL));
     pthread_t threads[16];
-    int N_values[] = {64, 1048576};
 
     if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
         printf("Can't initiate PAPI library!\n");
@@ -161,7 +163,7 @@ int main() {
 
     // Actual work goes here.
     for (int j = 0; j < 16; j++) {
-        pthread_create(&threads[j], NULL, workload, &N_values[0]);
+        pthread_create(&threads[j], NULL, workload, &current_N);
     }
     
     for (int j = 0; j < 16; j++) {
