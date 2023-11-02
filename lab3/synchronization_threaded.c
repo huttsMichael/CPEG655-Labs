@@ -8,7 +8,7 @@
 pthread_mutex_t tree_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Papi setup pulled from lab 2
-int events[1] = {PAPI_L2_DCM}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
+int events[1] = {PAPI_TOT_CYC}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
 long long values[1];
 int eventset;
 int nEvents, retval;
@@ -119,11 +119,11 @@ void* workload(void* arg) {
         pthread_mutex_unlock(&tree_mutex);
     }
 
-    // 3. Print size and checkIntegrity
-    pthread_mutex_lock(&tree_mutex);
-    printf("Size: %d\n", size(root));
-    printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
-    pthread_mutex_unlock(&tree_mutex);
+    // 3. Print size and checkIntegrity (not done when profiling)
+    // pthread_mutex_lock(&tree_mutex);
+    // printf("Size: %d\n", size(root));
+    // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
+    // pthread_mutex_unlock(&tree_mutex);
 
     pthread_exit(NULL);
 }
@@ -159,17 +159,16 @@ int main() {
     }
 
 
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 16; j++) {
-            pthread_create(&threads[j], NULL, workload, &N_values[i]);
-        }
-        
-        for (int j = 0; j < 16; j++) {
-            pthread_join(threads[j], NULL);
-        }
+    // Actual work goes here.
+    for (int j = 0; j < 16; j++) {
+        pthread_create(&threads[j], NULL, workload, &N_values[0]);
+    }
+    
+    for (int j = 0; j < 16; j++) {
+        pthread_join(threads[j], NULL);
     }
 
-    // should probably move to inside for loop, keeping here for now.
+
     if ((retval = PAPI_stop(eventset, values)) != PAPI_OK) {
         fprintf(stderr, "PAPI failed to read counters: %s\n",
                 PAPI_strerror(retval));
