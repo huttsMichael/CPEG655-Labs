@@ -15,7 +15,7 @@ int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
 
 // Misc constants
-int current_N = 64; // 1048576
+int current_N = 1048576; // 64, 1048576
 
 struct p {
     int v;
