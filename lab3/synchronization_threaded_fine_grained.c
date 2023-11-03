@@ -4,20 +4,20 @@
 #include <pthread.h>
 #include <papi.h>
 
-// Define a mutex to protect the tree
+// define a mutex to protect the tree
 pthread_mutex_t tree_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Papi setup pulled from lab 2
+// papi setup pulled from lab 2
 int events[1] = {PAPI_TOT_CYC}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
 long long values[1];
 int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
 
-// Misc constants
-int current_N = 64; // 64, 1048576
+// misc constants
+int N = 64; // 64, 1048576
 
-// Define a lock for each node in the tree
+// define a lock for each node in the tree
 pthread_mutex_t* node_locks;
 
 struct p {
@@ -46,7 +46,7 @@ struct p *add(int v, struct p *somewhere) {
 
 struct p *delete(int v, struct p *somewhere) {
     if (somewhere == NULL) {
-        return NULL; // Key not found
+        return NULL; // key not found
     }
 
     if (v < somewhere->v) {
@@ -54,7 +54,7 @@ struct p *delete(int v, struct p *somewhere) {
     } else if (v > somewhere->v) {
         somewhere->right = delete(v, somewhere->right);
     } else {
-        // Node with the key 'v' found
+        // node with the key 'v' found
         if (somewhere->left == NULL) {
             struct p *temp = somewhere->right;
             free(somewhere);
@@ -65,7 +65,7 @@ struct p *delete(int v, struct p *somewhere) {
             return temp;
         }
 
-        // Node with two children, get the inorder successor (smallest in the right subtree)
+        // node with two children, get the inorder successor (smallest in the right subtree)
         struct p *temp = somewhere->right;
         while (temp->left != NULL) {
             temp = temp->left;
@@ -92,18 +92,16 @@ int checkIntegrity(struct p *somewhere) {
     }
 
     if (somewhere->left != NULL && somewhere->left->v > somewhere->v) {
-        return 0; // Left subtree violates the property
+        return 0; // left subtree violates the property
     }
 
     if (somewhere->right != NULL && somewhere->right->v < somewhere->v) {
-        return 0; // Right subtree violates the property
+        return 0; // right subtree violates the property
     }
 
     return checkIntegrity(somewhere->left) && checkIntegrity(somewhere->right);
 }
 
-
-// Initialize locks for all nodes
 void initLocks(struct p* root) {
     if (root == NULL) {
         return;
@@ -113,39 +111,31 @@ void initLocks(struct p* root) {
     initLocks(root->right);
 }
 
-// Lock a node
 void lockNode(int key) {
     pthread_mutex_lock(&node_locks[key]);
 }
 
-// Unlock a node
 void unlockNode(int key) {
     pthread_mutex_unlock(&node_locks[key]);
 }
 
-// Free locks for all nodes
-void freeLocks(int N) {
+void freeLocks() {
     for (int i = 1; i <= N; i++) {
         pthread_mutex_destroy(&node_locks[i]);
     }
     free(node_locks);
 }
 
-// Define the workload as a function to be executed by each thread
-void* workload(void* arg) {
+void* workload() {
     struct p *root = NULL;
 
-    int N = *(int *)arg;
-
-    // Initialize locks for all nodes in the tree
+    // initialize locks for all nodes in the tree
     node_locks = (pthread_mutex_t*)malloc((N + 1) * sizeof(pthread_mutex_t));
     for (int i = 1; i <= N; i++) {
         pthread_mutex_init(&node_locks[i], NULL);
     }
 
-    // Initialize the tree properly here (you can also create an empty root node if needed)
-
-    // 1. Add random keys to the tree
+    // add random keys to the tree
     for (int i = 0; i < 1000; i++) {
         int key = rand() % N + 1;
         lockNode(key);
@@ -153,7 +143,7 @@ void* workload(void* arg) {
         unlockNode(key);
     }
 
-    // 2. Add and remove random keys from the tree
+    // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
         int key = rand() % N + 1;
         lockNode(key);
@@ -162,12 +152,9 @@ void* workload(void* arg) {
         unlockNode(key);
     }
 
-    // 3. Print size and checkIntegrity
+    // print size and checkIntegrity
     // printf("Size: %d\n", size(root));
     // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
-
-    // Free node locks
-    // No need to free node locks here, as we'll do it after all threads are done.
 
     pthread_exit(NULL);
 }
@@ -203,15 +190,15 @@ int main() {
 
     // Actual work goes here.
     for (int j = 0; j < 16; j++) {
-        pthread_create(&threads[j], NULL, workload, &current_N);
+        pthread_create(&threads[j], NULL, workload, NULL);
     }
     
     for (int j = 0; j < 16; j++) {
         pthread_join(threads[j], NULL);
     }
 
-    // Free node locks after all threads have finished
-    freeLocks(current_N);
+    // free node locks after all threads have finished
+    freeLocks();
 
     if ((retval = PAPI_stop(eventset, values)) != PAPI_OK) {
         fprintf(stderr, "PAPI failed to read counters: %s\n",
