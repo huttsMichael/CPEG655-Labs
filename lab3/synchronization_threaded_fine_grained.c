@@ -130,6 +130,10 @@ void* workload() {
         root = delete(key, root);
     }
 
+    // print size and checkIntegrity (not done when profiling)
+    // printf("Size: %d\n", size(root));
+    // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
+
     // printf("Exiting Thread ID: %lu\n", thread_id);
     pthread_exit(NULL);
 }
