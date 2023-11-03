@@ -43,7 +43,7 @@ struct p *add(int v, struct p *somewhere) {
 
 struct p *delete(int v, struct p *somewhere) {
     if (somewhere == NULL) {
-        return NULL; // Key not found
+        return NULL; // key not found
     }
 
     if (v < somewhere->v) {
@@ -51,7 +51,7 @@ struct p *delete(int v, struct p *somewhere) {
     } else if (v > somewhere->v) {
         somewhere->right = delete(v, somewhere->right);
     } else {
-        // Node with the key 'v' found
+        // node with the key 'v' found
         if (somewhere->left == NULL) {
             struct p *temp = somewhere->right;
             free(somewhere);
@@ -62,7 +62,7 @@ struct p *delete(int v, struct p *somewhere) {
             return temp;
         }
 
-        // Node with two children, get the inorder successor (smallest in the right subtree)
+        // node with two children, get the inorder successor (smallest in the right subtree)
         struct p *temp = somewhere->right;
         while (temp->left != NULL) {
             temp = temp->left;
@@ -99,11 +99,10 @@ int checkIntegrity(struct p *somewhere) {
     return checkIntegrity(somewhere->left) && checkIntegrity(somewhere->right);
 }
 
-// Define the workload as a function to be executed by each thread
 void* workload() {
     struct p *root = NULL;
     
-    // 1. Add random keys to the tree
+    // add random keys to the tree
     for (int i = 0; i < 1000; i++) {
         int key = rand() % N + 1;
         pthread_mutex_lock(&tree_mutex);
@@ -111,7 +110,7 @@ void* workload() {
         pthread_mutex_unlock(&tree_mutex);
     }
     
-    // 2. Add and remove random keys from the tree
+    // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
         int key = rand() % N + 1;
         pthread_mutex_lock(&tree_mutex);
@@ -120,7 +119,7 @@ void* workload() {
         pthread_mutex_unlock(&tree_mutex);
     }
 
-    // 3. Print size and checkIntegrity (not done when profiling)
+    // print size and checkIntegrity (not done when profiling)
     // pthread_mutex_lock(&tree_mutex);
     // printf("Size: %d\n", size(root));
     // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
