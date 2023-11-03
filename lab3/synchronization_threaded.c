@@ -4,17 +4,17 @@
 #include <pthread.h>
 #include <papi.h>
 
-// Define a mutex to protect the tree
+// define a mutex to protect the tree
 pthread_mutex_t tree_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Papi setup pulled from lab 2
+// papi setup pulled from lab 2
 int events[1] = {PAPI_TOT_CYC}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
 long long values[1];
 int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
 
-// Misc constants
+// misc constants
 int N = 1048576; // 64, 1048576
 
 struct p {
@@ -89,11 +89,11 @@ int checkIntegrity(struct p *somewhere) {
     }
 
     if (somewhere->left != NULL && somewhere->left->v > somewhere->v) {
-        return 0; // Left subtree violates the property
+        return 0; // left subtree violates the property
     }
 
     if (somewhere->right != NULL && somewhere->right->v < somewhere->v) {
-        return 0; // Right subtree violates the property
+        return 0; // right subtree violates the property
     }
 
     return checkIntegrity(somewhere->left) && checkIntegrity(somewhere->right);
