@@ -24,6 +24,7 @@ struct p {
 };
 
 struct p *add(int v, struct p *somewhere) {
+    printf("add");
     if (somewhere == NULL) {
         struct p *newNode = (struct p *)malloc(sizeof(struct p));
         newNode->v = v;
@@ -42,6 +43,7 @@ struct p *add(int v, struct p *somewhere) {
 }
 
 struct p *delete(int v, struct p *somewhere) {
+    printf("delete");
     if (somewhere == NULL) {
         return NULL; // key not found
     }
@@ -76,6 +78,7 @@ struct p *delete(int v, struct p *somewhere) {
 }
 
 int size(struct p *somewhere) {
+    printf("size");
     if (somewhere == NULL) {
         return 0;
     } else {
@@ -84,6 +87,7 @@ int size(struct p *somewhere) {
 }
 
 int checkIntegrity(struct p *somewhere) {
+    printf("checkIntegrity");
     if (somewhere == NULL) {
         return 1;
     }
@@ -100,6 +104,7 @@ int checkIntegrity(struct p *somewhere) {
 }
 
 void* workload() {
+    printf("workload");
     struct p *root = NULL;
     
     // add random keys to the tree
@@ -157,6 +162,7 @@ int main() {
         exit(1);
     }
 
+    printf("before workload");
     // Actual work goes here.
     for (int j = 0; j < 16; j++) {
         pthread_create(&threads[j], NULL, workload, NULL);
@@ -165,6 +171,7 @@ int main() {
     for (int j = 0; j < 16; j++) {
         pthread_join(threads[j], NULL);
     }
+    printf("after workload");
 
 
     if ((retval = PAPI_stop(eventset, values)) != PAPI_OK) {

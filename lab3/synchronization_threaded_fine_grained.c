@@ -4,51 +4,47 @@
 #include <pthread.h>
 #include <papi.h>
 
-// define a mutex to protect the tree
-pthread_mutex_t tree_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-// papi setup pulled from lab 2
-int events[1] = {PAPI_TOT_CYC}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
+int events[1] = {PAPI_TOT_CYC};
 long long values[1];
 int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
-
-// misc constants
-const int N = 64; // 64, 1048576
-
-// define a lock for each node in the tree
-pthread_mutex_t* node_locks;
+const int N = 1048576; // 64, 1048576
 
 struct p {
     int v;
-    struct p *left;
-    struct p *right;
+    struct p* left;
+    struct p* right;
+    pthread_mutex_t node_lock; // Lock for each node
 };
 
-struct p *add(int v, struct p *somewhere) {
+struct p* add(int v, struct p* somewhere) {
     if (somewhere == NULL) {
-        struct p *newNode = (struct p *)malloc(sizeof(struct p));
+        struct p* newNode = (struct p*)malloc(sizeof(struct p));
         newNode->v = v;
         newNode->left = NULL;
         newNode->right = NULL;
+        pthread_mutex_init(&newNode->node_lock, NULL);
         return newNode;
     }
 
+    pthread_mutex_lock(&somewhere->node_lock);
     if (v < somewhere->v) {
         somewhere->left = add(v, somewhere->left);
     } else if (v > somewhere->v) {
         somewhere->right = add(v, somewhere->right);
     }
+    pthread_mutex_unlock(&somewhere->node_lock);
 
     return somewhere;
 }
 
-struct p *delete(int v, struct p *somewhere) {
+struct p* delete(int v, struct p* somewhere) {
     if (somewhere == NULL) {
         return NULL; // key not found
     }
 
+    pthread_mutex_lock(&somewhere->node_lock);
     if (v < somewhere->v) {
         somewhere->left = delete(v, somewhere->left);
     } else if (v > somewhere->v) {
@@ -56,17 +52,19 @@ struct p *delete(int v, struct p *somewhere) {
     } else {
         // node with the key 'v' found
         if (somewhere->left == NULL) {
-            struct p *temp = somewhere->right;
+            struct p* temp = somewhere->right;
+            pthread_mutex_unlock(&somewhere->node_lock);
             free(somewhere);
             return temp;
         } else if (somewhere->right == NULL) {
-            struct p *temp = somewhere->left;
+            struct p* temp = somewhere->left;
+            pthread_mutex_unlock(&somewhere->node_lock);
             free(somewhere);
             return temp;
         }
 
         // node with two children, get the inorder successor (smallest in the right subtree)
-        struct p *temp = somewhere->right;
+        struct p* temp = somewhere->right;
         while (temp->left != NULL) {
             temp = temp->left;
         }
@@ -74,22 +72,34 @@ struct p *delete(int v, struct p *somewhere) {
         somewhere->v = temp->v;
         somewhere->right = delete(temp->v, somewhere->right);
     }
+    pthread_mutex_unlock(&somewhere->node_lock);
 
     return somewhere;
 }
 
-int size(struct p *somewhere) {
+int size(struct p* somewhere) {
     if (somewhere == NULL) {
         return 0;
     } else {
-        return 1 + size(somewhere->left) + size(somewhere->right);
+        int left_size, right_size;
+        pthread_mutex_lock(&somewhere->node_lock);
+        left_size = size(somewhere->left);
+        right_size = size(somewhere->right);
+        pthread_mutex_unlock(&somewhere->node_lock);
+        return 1 + left_size + right_size;
     }
 }
 
-int checkIntegrity(struct p *somewhere) {
+int checkIntegrity(struct p* somewhere) {
     if (somewhere == NULL) {
         return 1;
     }
+
+    int left_integrity, right_integrity;
+    pthread_mutex_lock(&somewhere->node_lock);
+    left_integrity = checkIntegrity(somewhere->left);
+    right_integrity = checkIntegrity(somewhere->right);
+    pthread_mutex_unlock(&somewhere->node_lock);
 
     if (somewhere->left != NULL && somewhere->left->v > somewhere->v) {
         return 0; // left subtree violates the property
@@ -99,63 +109,28 @@ int checkIntegrity(struct p *somewhere) {
         return 0; // right subtree violates the property
     }
 
-    return checkIntegrity(somewhere->left) && checkIntegrity(somewhere->right);
-}
-
-void initLocks(struct p* root) {
-    if (root == NULL) {
-        return;
-    }
-    pthread_mutex_init(&node_locks[root->v], NULL);
-    initLocks(root->left);
-    initLocks(root->right);
-}
-
-void lockNode(int key) {
-    pthread_mutex_lock(&node_locks[key]);
-}
-
-void unlockNode(int key) {
-    pthread_mutex_unlock(&node_locks[key]);
-}
-
-void freeLocks() {
-    for (int i = 1; i <= N; i++) {
-        pthread_mutex_destroy(&node_locks[i]);
-    }
-    free(node_locks);
+    return left_integrity && right_integrity;
 }
 
 void* workload() {
-    struct p *root = NULL;
-
-    // initialize locks for all nodes in the tree
-    node_locks = (pthread_mutex_t*)malloc((N + 1) * sizeof(pthread_mutex_t));
-    for (int i = 1; i <= N; i++) {
-        pthread_mutex_init(&node_locks[i], NULL);
-    }
+    pthread_t thread_id = pthread_self();
+    // printf("Thread ID: %lu\n", thread_id);
+    struct p* root = NULL;
 
     // add random keys to the tree
     for (int i = 0; i < 1000; i++) {
         int key = rand() % N + 1;
-        lockNode(key);
         root = add(key, root);
-        unlockNode(key);
     }
 
     // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
         int key = rand() % N + 1;
-        lockNode(key);
         root = add(key, root);
         root = delete(key, root);
-        unlockNode(key);
     }
 
-    // print size and checkIntegrity
-    // printf("Size: %d\n", size(root));
-    // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
-
+    // printf("Exiting Thread ID: %lu\n", thread_id);
     pthread_exit(NULL);
 }
 
@@ -176,9 +151,8 @@ int main() {
     nEvents = sizeof(values) / sizeof(values[0]);
     for (int i = 0; i < nEvents; i++) {
         if ((retval = PAPI_add_event(eventset, events[i])) != PAPI_OK) {
-        printf("\n\t   Error : PAPI failed to add event %d\n", i);
-        printf("\n\t   Error string : %s  :: Error code : %d \n",
-                PAPI_strerror(retval), retval);
+            printf("\n\t   Error : PAPI failed to add event %d\n", i);
+            printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
         }
     }
 
@@ -190,19 +164,19 @@ int main() {
 
     // Actual work goes here.
     for (int j = 0; j < 16; j++) {
+        // printf("Creating thread: %i\n", j);
         pthread_create(&threads[j], NULL, workload, NULL);
-    }
-    
-    for (int j = 0; j < 16; j++) {
-        pthread_join(threads[j], NULL);
+        // printf("Done creating thread: %i\n", j);
     }
 
-    // free node locks after all threads have finished
-    freeLocks();
+    for (int j = 0; j < 16; j++) {
+        // printf("Joining thread: %i\n", j);
+        pthread_join(threads[j], NULL);
+        // printf("Done joining thread: %i\n", j);
+    }
 
     if ((retval = PAPI_stop(eventset, values)) != PAPI_OK) {
-        fprintf(stderr, "PAPI failed to read counters: %s\n",
-                PAPI_strerror(retval));
+        fprintf(stderr, "PAPI failed to read counters: %s\n", PAPI_strerror(retval));
         exit(1);
     }
 
@@ -214,17 +188,13 @@ int main() {
     printf("\n");
 
     if ((retval = PAPI_cleanup_eventset(eventset)) != PAPI_OK) {
-        printf(
-            "\n\t   Error : PAPI failed to clean the events from created Eventset");
-        printf("\n\t   Error string : %s  :: Error code : %d \n",
-            PAPI_strerror(retval), retval);
+        printf("\n\t   Error : PAPI failed to clean the events from created Eventset");
+        printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
         return (-1);
     }
     if ((retval = PAPI_destroy_eventset(&eventset)) != PAPI_OK) {
-        printf(
-            "\n\t   Error : PAPI failed to clean the events from created Eventset");
-        printf("\n\t   Error string : %s  :: Error code : %d \n",
-            PAPI_strerror(retval), retval);
+        printf("\n\t   Error : PAPI failed to clean the events from created Eventset");
+        printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
         return (-1);
     }
     PAPI_shutdown();
