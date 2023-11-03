@@ -113,7 +113,7 @@ int checkIntegrity(struct p* somewhere) {
 }
 
 void* workload() {
-    pthread_t thread_id = pthread_self();
+    // pthread_t thread_id = pthread_self();
     // printf("Thread ID: %lu\n", thread_id);
     struct p* root = NULL;
 
