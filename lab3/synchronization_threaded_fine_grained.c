@@ -15,7 +15,7 @@ int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
 
 // misc constants
-int N = 64; // 64, 1048576
+const int N = 64; // 64, 1048576
 
 // define a lock for each node in the tree
 pthread_mutex_t* node_locks;
