@@ -15,7 +15,7 @@ int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
 
 // Misc constants
-int current_N = 1048576; // 64, 1048576
+int N = 1048576; // 64, 1048576
 
 struct p {
     int v;
@@ -100,10 +100,8 @@ int checkIntegrity(struct p *somewhere) {
 }
 
 // Define the workload as a function to be executed by each thread
-void* workload(void* arg) {
+void* workload() {
     struct p *root = NULL;
-
-    int N = *(int *)arg;
     
     // 1. Add random keys to the tree
     for (int i = 0; i < 1000; i++) {
@@ -160,10 +158,9 @@ int main() {
         exit(1);
     }
 
-
     // Actual work goes here.
     for (int j = 0; j < 16; j++) {
-        pthread_create(&threads[j], NULL, workload, &current_N);
+        pthread_create(&threads[j], NULL, workload, NULL);
     }
     
     for (int j = 0; j < 16; j++) {
