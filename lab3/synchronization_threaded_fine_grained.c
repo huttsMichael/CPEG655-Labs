@@ -30,11 +30,15 @@ struct p* add(int v, struct p* somewhere) {
 
     pthread_mutex_lock(&somewhere->node_lock);
     if (v < somewhere->v) {
+        pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
         somewhere->left = add(v, somewhere->left);
     } else if (v > somewhere->v) {
+        pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
         somewhere->right = add(v, somewhere->right);
+    } else {
+        pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
+        // fallback if duplicate
     }
-    pthread_mutex_unlock(&somewhere->node_lock);
 
     return somewhere;
 }
@@ -46,19 +50,21 @@ struct p* delete(int v, struct p* somewhere) {
 
     pthread_mutex_lock(&somewhere->node_lock);
     if (v < somewhere->v) {
+        pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
         somewhere->left = delete(v, somewhere->left);
     } else if (v > somewhere->v) {
+        pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
         somewhere->right = delete(v, somewhere->right);
     } else {
         // node with the key 'v' found
         if (somewhere->left == NULL) {
             struct p* temp = somewhere->right;
-            pthread_mutex_unlock(&somewhere->node_lock);
+            pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
             free(somewhere);
             return temp;
         } else if (somewhere->right == NULL) {
             struct p* temp = somewhere->left;
-            pthread_mutex_unlock(&somewhere->node_lock);
+            pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
             free(somewhere);
             return temp;
         }
@@ -71,8 +77,8 @@ struct p* delete(int v, struct p* somewhere) {
 
         somewhere->v = temp->v;
         somewhere->right = delete(temp->v, somewhere->right);
+        pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
     }
-    pthread_mutex_unlock(&somewhere->node_lock);
 
     return somewhere;
 }
@@ -84,8 +90,10 @@ int size(struct p* somewhere) {
         int left_size, right_size;
         pthread_mutex_lock(&somewhere->node_lock);
         left_size = size(somewhere->left);
+        pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
+        pthread_mutex_lock(&somewhere->node_lock);
         right_size = size(somewhere->right);
-        pthread_mutex_unlock(&somewhere->node_lock);
+        pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
         return 1 + left_size + right_size;
     }
 }
@@ -98,8 +106,10 @@ int checkIntegrity(struct p* somewhere) {
     int left_integrity, right_integrity;
     pthread_mutex_lock(&somewhere->node_lock);
     left_integrity = checkIntegrity(somewhere->left);
+    pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
+    pthread_mutex_lock(&somewhere->node_lock);
     right_integrity = checkIntegrity(somewhere->right);
-    pthread_mutex_unlock(&somewhere->node_lock);
+    pthread_mutex_unlock(&somewhere->node_lock); // Release lock on current node
 
     if (somewhere->left != NULL && somewhere->left->v > somewhere->v) {
         return 0; // left subtree violates the property
