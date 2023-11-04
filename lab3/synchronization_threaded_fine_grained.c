@@ -15,7 +15,7 @@ struct p {
     int v;
     struct p* left;
     struct p* right;
-    pthread_mutex_t node_lock; // Lock for each node
+    pthread_mutex_t node_lock;
 };
 
 struct p* add(int v, struct p* somewhere) {
