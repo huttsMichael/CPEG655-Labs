@@ -124,6 +124,8 @@ void* workload() {
         int key = rand() % N + 1;
         pthread_mutex_lock(&tree_mutex);
         root = add(key, root);
+        // pthread_mutex_unlock(&tree_mutex);
+        // pthread_mutex_lock(&tree_mutex);
         root = delete(key, root);
         pthread_mutex_unlock(&tree_mutex);
     }
@@ -166,6 +168,7 @@ int main() {
         exit(1);
     }
 
+    clock_t tic = clock();
     // printf("before workload\n");
     // Actual work goes here.
     for (int j = 0; j < 16; j++) {
@@ -176,7 +179,9 @@ int main() {
         pthread_join(threads[j], NULL);
     }
     // printf("after workload\n");
+    clock_t toc = clock();
 
+    printf("%f\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 
     if ((retval = PAPI_stop(eventset, values)) != PAPI_OK) {
         fprintf(stderr, "PAPI failed to read counters: %s\n",
@@ -185,11 +190,11 @@ int main() {
     }
 
       /* Print out your profiling results here */
-    for (int i = 0; i < nEvents; i++) {
-        PAPI_event_code_to_name(events[i], eventLabel);
-        printf("%s:\t%lld\t", eventLabel, values[i]);
-    }
-    printf("\n");
+    // for (int i = 0; i < nEvents; i++) {
+    //     PAPI_event_code_to_name(events[i], eventLabel);
+    //     printf("%s:\t%lld\t", eventLabel, values[i]);
+    // }
+    // printf("\n");
 
     if ((retval = PAPI_cleanup_eventset(eventset)) != PAPI_OK) {
         printf(

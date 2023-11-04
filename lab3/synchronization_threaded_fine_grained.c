@@ -9,7 +9,7 @@ long long values[1];
 int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
-const int N = 1048576; // 64, 1048576
+const int N = 64; // 64, 1048576
 
 struct p {
     int v;
@@ -112,7 +112,7 @@ int checkIntegrity(struct p* somewhere) {
     }
 
     int left_integrity, right_integrity;
-    
+
     pthread_mutex_lock(&somewhere->node_lock);
     left_integrity = checkIntegrity(somewhere->left);
     pthread_mutex_unlock(&somewhere->node_lock); 
@@ -188,30 +188,33 @@ int main() {
         exit(1);
     }
 
+    clock_t tic = clock();
+    // printf("before workload\n");
     // Actual work goes here.
     for (int j = 0; j < 16; j++) {
-        // printf("Creating thread: %i\n", j);
         pthread_create(&threads[j], NULL, workload, NULL);
-        // printf("Done creating thread: %i\n", j);
     }
-
+    
     for (int j = 0; j < 16; j++) {
-        // printf("Joining thread: %i\n", j);
         pthread_join(threads[j], NULL);
-        // printf("Done joining thread: %i\n", j);
     }
+    // printf("after workload\n");
+    clock_t toc = clock();
+
+    printf("%f\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 
     if ((retval = PAPI_stop(eventset, values)) != PAPI_OK) {
-        fprintf(stderr, "PAPI failed to read counters: %s\n", PAPI_strerror(retval));
+        fprintf(stderr, "PAPI failed to read counters: %s\n",
+                PAPI_strerror(retval));
         exit(1);
     }
 
-    /* Print out your profiling results here */
-    for (int i = 0; i < nEvents; i++) {
-        PAPI_event_code_to_name(events[i], eventLabel);
-        printf("%s:\t%lld\t", eventLabel, values[i]);
-    }
-    printf("\n");
+      /* Print out your profiling results here */
+    // for (int i = 0; i < nEvents; i++) {
+    //     PAPI_event_code_to_name(events[i], eventLabel);
+    //     printf("%s:\t%lld\t", eventLabel, values[i]);
+    // }
+    // printf("\n");
 
     if ((retval = PAPI_cleanup_eventset(eventset)) != PAPI_OK) {
         printf("\n\t   Error : PAPI failed to clean the events from created Eventset");
