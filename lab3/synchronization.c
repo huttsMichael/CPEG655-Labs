@@ -89,12 +89,12 @@ int checkIntegrity(struct p *somewhere) {
 int main() {
     struct p *root = NULL;
     
-    root = add(7, root);
+    root = add(4, root);
     root = add(5, root);
     root = add(9, root);
-    root = add(4, root);
     root = add(6, root);
     root = add(8, root);
+    root = add(7, root);
     root = add(10, root);
     root = add(2, root);
     root = add(12, root);
