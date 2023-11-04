@@ -32,10 +32,12 @@ struct p* add(int v, struct p* somewhere) {
     if (v < somewhere->v) {
         pthread_mutex_unlock(&somewhere->node_lock);
         somewhere->left = add(v, somewhere->left);
-    } else if (v > somewhere->v) {
+    } 
+    else if (v > somewhere->v) {
         pthread_mutex_unlock(&somewhere->node_lock); 
         somewhere->right = add(v, somewhere->right);
-    } else {
+    } 
+    else {
         pthread_mutex_unlock(&somewhere->node_lock);
         // fallback if duplicate?
     }
@@ -52,17 +54,20 @@ struct p* delete(int v, struct p* somewhere) {
     if (v < somewhere->v) {
         pthread_mutex_unlock(&somewhere->node_lock); 
         somewhere->left = delete(v, somewhere->left);
-    } else if (v > somewhere->v) {
+    } 
+    else if (v > somewhere->v) {
         pthread_mutex_unlock(&somewhere->node_lock);
         somewhere->right = delete(v, somewhere->right);
-    } else {
+    } 
+    else {
         // node with the key 'v' found
         if (somewhere->left == NULL) {
             struct p* temp = somewhere->right;
             pthread_mutex_unlock(&somewhere->node_lock); 
             free(somewhere);
             return temp;
-        } else if (somewhere->right == NULL) {
+        } 
+        else if (somewhere->right == NULL) {
             struct p* temp = somewhere->left;
             pthread_mutex_unlock(&somewhere->node_lock); 
             free(somewhere);
@@ -86,14 +91,18 @@ struct p* delete(int v, struct p* somewhere) {
 int size(struct p* somewhere) {
     if (somewhere == NULL) {
         return 0;
-    } else {
+    } 
+    else {
         int left_size, right_size;
+
         pthread_mutex_lock(&somewhere->node_lock);
         left_size = size(somewhere->left);
-        pthread_mutex_unlock(&somewhere->node_lock); 
+        pthread_mutex_unlock(&somewhere->node_lock);
+
         pthread_mutex_lock(&somewhere->node_lock);
         right_size = size(somewhere->right);
-        pthread_mutex_unlock(&somewhere->node_lock); 
+        pthread_mutex_unlock(&somewhere->node_lock);
+
         return 1 + left_size + right_size;
     }
 }
