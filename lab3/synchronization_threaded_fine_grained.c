@@ -10,6 +10,7 @@ int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
 const int N = 64; // 64, 1048576
+struct p* root = NULL;
 
 struct p {
     int v;
@@ -30,17 +31,15 @@ struct p* add(int v, struct p* somewhere) {
 
     pthread_mutex_lock(&somewhere->node_lock);
     if (v < somewhere->v) {
-        pthread_mutex_unlock(&somewhere->node_lock);
         somewhere->left = add(v, somewhere->left);
     } 
     else if (v > somewhere->v) {
-        pthread_mutex_unlock(&somewhere->node_lock); 
         somewhere->right = add(v, somewhere->right);
     } 
     else {
-        pthread_mutex_unlock(&somewhere->node_lock);
-        // fallback if duplicate?
+        somewhere->right = add(v, somewhere->right);
     }
+    pthread_mutex_unlock(&somewhere->node_lock);
 
     return somewhere;
 }
@@ -52,12 +51,12 @@ struct p* delete(int v, struct p* somewhere) {
 
     pthread_mutex_lock(&somewhere->node_lock);
     if (v < somewhere->v) {
-        pthread_mutex_unlock(&somewhere->node_lock); 
         somewhere->left = delete(v, somewhere->left);
+        pthread_mutex_unlock(&somewhere->node_lock); 
     } 
     else if (v > somewhere->v) {
-        pthread_mutex_unlock(&somewhere->node_lock);
         somewhere->right = delete(v, somewhere->right);
+        pthread_mutex_unlock(&somewhere->node_lock);
     } 
     else {
         // node with the key 'v' found
@@ -137,13 +136,15 @@ int checkIntegrity(struct p* somewhere) {
 void* workload() {
     // pthread_t thread_id = pthread_self();
     // printf("Thread ID: %lu\n", thread_id);
-    struct p* root = NULL;
+    // struct p* root = NULL;
 
     // add random keys to the tree
     for (int i = 0; i < 1000; i++) {
         int key = rand() % N + 1;
         root = add(key, root);
     }
+
+    // printf("Size: %d\n", size(root));
 
     // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
