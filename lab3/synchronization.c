@@ -89,21 +89,21 @@ int checkIntegrity(struct p *somewhere) {
 int main() {
     struct p *root = NULL;
     
-    root = add(70, root);
-    root = add(50, root);
-    root = add(90, root);
-    root = add(40, root);
-    root = add(60, root);
-    root = add(80, root);
-    root = add(100, root);
-    root = add(20, root);
-    root = add(120, root);
+    root = add(7, root);
+    root = add(5, root);
+    root = add(9, root);
+    root = add(4, root);
+    root = add(6, root);
+    root = add(8, root);
+    root = add(10, root);
+    root = add(2, root);
+    root = add(12, root);
     
     printf("Size of tree: %d\n", size(root));
     printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
     
-    root = delete(50, root);
-    root = delete(90, root);
+    root = delete(5, root);
+    root = delete(9, root);
     
     printf("Size of tree after deletion: %d\n", size(root));
     printf("Tree integrity after deletion: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
