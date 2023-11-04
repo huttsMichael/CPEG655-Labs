@@ -97,11 +97,11 @@ int checkIntegrity(struct p *somewhere) {
     }
 
     if (somewhere->left != NULL && somewhere->left->v > somewhere->v) {
-        return 0; // left subtree violates the property
+        return 0; 
     }
 
     if (somewhere->right != NULL && somewhere->right->v < somewhere->v) {
-        return 0; // right subtree violates the property
+        return 0; 
     }
 
     return checkIntegrity(somewhere->left) && checkIntegrity(somewhere->right);
@@ -118,7 +118,7 @@ void* workload() {
         root = add(key, root);
         pthread_mutex_unlock(&tree_mutex);
     }
-    
+
     // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
         int key = rand() % N + 1;
