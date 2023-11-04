@@ -74,7 +74,6 @@ struct p* delete(int v, struct p* somewhere) {
             return temp;
         }
 
-        // node with two children, get the inorder successor (smallest in the right subtree)
         struct p* temp = somewhere->right;
         while (temp->left != NULL) {
             temp = temp->left;
@@ -113,9 +112,11 @@ int checkIntegrity(struct p* somewhere) {
     }
 
     int left_integrity, right_integrity;
+    
     pthread_mutex_lock(&somewhere->node_lock);
     left_integrity = checkIntegrity(somewhere->left);
     pthread_mutex_unlock(&somewhere->node_lock); 
+
     pthread_mutex_lock(&somewhere->node_lock);
     right_integrity = checkIntegrity(somewhere->right);
     pthread_mutex_unlock(&somewhere->node_lock); 
