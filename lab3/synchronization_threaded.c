@@ -35,7 +35,8 @@ struct p *add(int v, struct p *somewhere) {
 
     if (v < somewhere->v) {
         somewhere->left = add(v, somewhere->left);
-    } else if (v > somewhere->v) {
+    } 
+    else if (v > somewhere->v) {
         somewhere->right = add(v, somewhere->right);
     }
 
@@ -50,21 +51,23 @@ struct p *delete(int v, struct p *somewhere) {
 
     if (v < somewhere->v) {
         somewhere->left = delete(v, somewhere->left);
-    } else if (v > somewhere->v) {
+    } 
+    else if (v > somewhere->v) {
         somewhere->right = delete(v, somewhere->right);
-    } else {
+    } 
+    else {
         // node with the key 'v' found
         if (somewhere->left == NULL) {
             struct p *temp = somewhere->right;
             free(somewhere);
             return temp;
-        } else if (somewhere->right == NULL) {
+        } 
+        else if (somewhere->right == NULL) {
             struct p *temp = somewhere->left;
             free(somewhere);
             return temp;
         }
 
-        // node with two children, get the inorder successor (smallest in the right subtree)
         struct p *temp = somewhere->right;
         while (temp->left != NULL) {
             temp = temp->left;
@@ -81,7 +84,8 @@ int size(struct p *somewhere) {
     // printf("size\n");
     if (somewhere == NULL) {
         return 0;
-    } else {
+    } 
+    else {
         return 1 + size(somewhere->left) + size(somewhere->right);
     }
 }
