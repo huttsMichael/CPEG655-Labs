@@ -96,6 +96,8 @@ int main() {
     root = add(60, root);
     root = add(80, root);
     root = add(100, root);
+    root = add(20, root);
+    root = add(120, root);
     
     printf("Size of tree: %d\n", size(root));
     printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
