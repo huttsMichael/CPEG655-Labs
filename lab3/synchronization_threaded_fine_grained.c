@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
-#include <papi.h>
+// #include <papi.h>
 
-int events[1] = {PAPI_TOT_CYC};
-long long values[1];
-int eventset;
-int nEvents, retval;
-char eventLabel[PAPI_MAX_STR_LEN];
+pthread_mutex_t initialLock = PTHREAD_MUTEX_INITIALIZER;
+// int events[1] = {PAPI_TOT_CYC};
+// long long values[1];
+// int eventset;
+// int nEvents, retval;
+// char eventLabel[PAPI_MAX_STR_LEN];
 const int N = 64; // 64, 1048576
 struct p* root = NULL;
 
@@ -20,31 +21,73 @@ struct p {
 };
 
 struct p* add(int v, struct p* somewhere) {
-    if (somewhere == NULL) {
-        struct p* newNode = (struct p*)malloc(sizeof(struct p));
-        newNode->v = v;
-        newNode->left = NULL;
-        newNode->right = NULL;
-        pthread_mutex_init(&newNode->node_lock, NULL);
-        return newNode;
+    struct p* currentNode = somewhere;
+    struct p* parentNode = NULL;
+    
+    while (currentNode != NULL) {
+        pthread_mutex_lock(&currentNode->node_lock);
+        
+        if (parentNode != NULL) {
+            pthread_mutex_unlock(&parentNode->node_lock);
+        }
+        
+        parentNode = currentNode;
+        
+        if (v < currentNode->v) {
+            if (currentNode->left == NULL) {
+                struct p* newNode = (struct p *)malloc(sizeof(struct p));
+                newNode->v = v;
+                newNode->left = NULL;
+                newNode->right = NULL;
+                pthread_mutex_init(&newNode->node_lock, NULL);
+                currentNode->left = newNode; 
+                pthread_mutex_unlock(&currentNode->node_lock);
+                return somewhere;
+            } else {
+                currentNode = currentNode->left;
+            }
+        } else if (v > currentNode->v) {
+            if (currentNode->right == NULL) {
+                // Create a new node when right is NULL
+                struct p* newNode = (struct p *)malloc(sizeof(struct p));
+                newNode->v = v;
+                newNode->left = NULL;
+                newNode->right = NULL;
+                pthread_mutex_init(&newNode->node_lock, NULL);
+                currentNode->right = newNode; 
+                pthread_mutex_unlock(&currentNode->node_lock);
+                return somewhere;
+            } else {
+                currentNode = currentNode->right;
+            }
+        } else {
+            // Handle duplicates by choosing the right subtree
+            if (currentNode->right == NULL) {
+                struct p* newNode = (struct p *)malloc(sizeof(struct p));
+                newNode->v = v;
+                newNode->left = NULL;
+                newNode->right = NULL;
+                pthread_mutex_init(&newNode->node_lock, NULL);
+                currentNode->right = newNode; 
+                pthread_mutex_unlock(&currentNode->node_lock);
+                return somewhere;
+            } else {
+                currentNode = currentNode->right;
+            }
+        }
     }
-
-    pthread_mutex_lock(&somewhere->node_lock);
-    if (v < somewhere->v) {
-        somewhere->left = add(v, somewhere->left);
-    } 
-    else if (v > somewhere->v) {
-        somewhere->right = add(v, somewhere->right);
-    } 
-    else {
-        somewhere->right = add(v, somewhere->right);
-    }
-    pthread_mutex_unlock(&somewhere->node_lock);
-
-    return somewhere;
+    
+    // Handle the case where the tree is initially empty
+    struct p* newNode = (struct p *)malloc(sizeof(struct p));
+    newNode->v = v;
+    newNode->left = NULL;
+    newNode->right = NULL;
+    pthread_mutex_init(&newNode->node_lock, NULL);
+    return newNode;
 }
 
 struct p* delete(int v, struct p* somewhere) {
+    // printf("delete\n");
     if (somewhere == NULL) {
         return NULL; // key not found
     }
@@ -138,13 +181,18 @@ void* workload() {
     // printf("Thread ID: %lu\n", thread_id);
     // struct p* root = NULL;
 
+
     // add random keys to the tree
     for (int i = 0; i < 1000; i++) {
         int key = rand() % N + 1;
         root = add(key, root);
+        // printf("Size (%lu): %d\n", thread_id, size(root));
+        // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
     }
 
-    // printf("Size: %d\n", size(root));
+    // printf("***************************************************\n");
+    // printf("**********YOU MADE IT PAST THE FIRST LOOP**********\n");
+    // printf("***************************************************\n");
 
     // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
@@ -165,29 +213,32 @@ int main() {
     srand(time(NULL));
     pthread_t threads[16];
 
-    if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
-        printf("Can't initiate PAPI library!\n");
-        exit(-1);
-    }
+    // if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
+    //     printf("Can't initiate PAPI library!\n");
+    //     exit(-1);
+    // }
 
-    eventset = PAPI_NULL;
-    if (PAPI_create_eventset(&eventset) != PAPI_OK) {
-        printf("Can't create eventset!\n");
-        exit(-3);
-    }
-    nEvents = sizeof(values) / sizeof(values[0]);
-    for (int i = 0; i < nEvents; i++) {
-        if ((retval = PAPI_add_event(eventset, events[i])) != PAPI_OK) {
-            printf("\n\t   Error : PAPI failed to add event %d\n", i);
-            printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
-        }
-    }
+    // eventset = PAPI_NULL;
+    // if (PAPI_create_eventset(&eventset) != PAPI_OK) {
+    //     printf("Can't create eventset!\n");
+    //     exit(-3);
+    // }
+    // nEvents = sizeof(values) / sizeof(values[0]);
+    // for (int i = 0; i < nEvents; i++) {
+    //     if ((retval = PAPI_add_event(eventset, events[i])) != PAPI_OK) {
+    //         printf("\n\t   Error : PAPI failed to add event %d\n", i);
+    //         printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
+    //     }
+    // }
 
-    if ((retval = PAPI_start(eventset)) != PAPI_OK) {
-        fprintf(stderr, "PAPI failed to start counters: %s\n",
-                PAPI_strerror(retval));
-        exit(1);
-    }
+    // if ((retval = PAPI_start(eventset)) != PAPI_OK) {
+    //     fprintf(stderr, "PAPI failed to start counters: %s\n",
+    //             PAPI_strerror(retval));
+    //     exit(1);
+    // }
+
+    // initialize tree to prevent weirdness
+    // root = add(N, root);
 
     clock_t tic = clock();
     // printf("before workload\n");
@@ -204,11 +255,11 @@ int main() {
 
     printf("%f\n", (double)(toc - tic) / CLOCKS_PER_SEC);
 
-    if ((retval = PAPI_stop(eventset, values)) != PAPI_OK) {
-        fprintf(stderr, "PAPI failed to read counters: %s\n",
-                PAPI_strerror(retval));
-        exit(1);
-    }
+    // if ((retval = PAPI_stop(eventset, values)) != PAPI_OK) {
+    //     fprintf(stderr, "PAPI failed to read counters: %s\n",
+    //             PAPI_strerror(retval));
+    //     exit(1);
+    // }
 
       /* Print out your profiling results here */
     // for (int i = 0; i < nEvents; i++) {
@@ -217,17 +268,17 @@ int main() {
     // }
     // printf("\n");
 
-    if ((retval = PAPI_cleanup_eventset(eventset)) != PAPI_OK) {
-        printf("\n\t   Error : PAPI failed to clean the events from created Eventset");
-        printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
-        return (-1);
-    }
-    if ((retval = PAPI_destroy_eventset(&eventset)) != PAPI_OK) {
-        printf("\n\t   Error : PAPI failed to clean the events from created Eventset");
-        printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
-        return (-1);
-    }
-    PAPI_shutdown();
+    // if ((retval = PAPI_cleanup_eventset(eventset)) != PAPI_OK) {
+    //     printf("\n\t   Error : PAPI failed to clean the events from created Eventset");
+    //     printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
+    //     return (-1);
+    // }
+    // if ((retval = PAPI_destroy_eventset(&eventset)) != PAPI_OK) {
+    //     printf("\n\t   Error : PAPI failed to clean the events from created Eventset");
+    //     printf("\n\t   Error string : %s  :: Error code : %d \n", PAPI_strerror(retval), retval);
+    //     return (-1);
+    // }
+    // PAPI_shutdown();
 
     return 0;
 }
