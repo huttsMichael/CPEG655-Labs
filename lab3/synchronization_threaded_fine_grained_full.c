@@ -12,6 +12,7 @@ int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
 const int N = 64; // 64, 1048576
 struct p* root = NULL;
+const int numThreads = 16;
 
 struct p {
     int v;
@@ -60,7 +61,6 @@ struct p* add(int v, struct p* somewhere) {
                 currentNode = currentNode->right;
             }
         } else {
-            // not explicitly specified, but default to right for duplicate values
             if (currentNode->right == NULL) {
                 struct p* newNode = (struct p *)malloc(sizeof(struct p));
                 newNode->v = v;
@@ -86,46 +86,128 @@ struct p* add(int v, struct p* somewhere) {
 }
 
 struct p* delete(int v, struct p* somewhere) {
-    // printf("delete\n");
+    // printf("delete %i\n", v);
     if (somewhere == NULL) {
         return NULL; // key not found
     }
 
-    pthread_mutex_lock(&somewhere->node_lock);
-    if (v < somewhere->v) {
-        somewhere->left = delete(v, somewhere->left);
-        pthread_mutex_unlock(&somewhere->node_lock); 
-    } 
-    else if (v > somewhere->v) {
-        somewhere->right = delete(v, somewhere->right);
-        pthread_mutex_unlock(&somewhere->node_lock);
-    } 
-    else {
-        // node with the key 'v' found
-        if (somewhere->left == NULL) {
-            struct p* temp = somewhere->right;
-            // pthread_mutex_unlock(&somewhere->node_lock); 
-            free(somewhere);
-            return temp;
-        } 
-        else if (somewhere->right == NULL) {
-            struct p* temp = somewhere->left;
-            // pthread_mutex_unlock(&somewhere->node_lock); 
-            free(somewhere);
-            return temp;
-        }
+    struct p* currentNode = somewhere;
+    struct p* parentNode = NULL;
 
-        struct p* temp = somewhere->right;
-        while (temp->left != NULL) {
-            temp = temp->left;
-        }
+    int parentDirection = 0;
 
-        somewhere->v = temp->v;
-        somewhere->right = delete(temp->v, somewhere->right);
-        pthread_mutex_unlock(&somewhere->node_lock); 
+    while (1) {
+        // printf("iteration in delete %i\n", v);
+        pthread_mutex_lock(&currentNode->node_lock);
+        if (v < currentNode->v) {
+            // printf("traversing left in delete %i\n", v);
+            // traverse left to find v
+            if (parentNode) {
+                pthread_mutex_unlock(&parentNode->node_lock);
+            }
+            
+            parentNode = currentNode;
+            currentNode = currentNode->left;
+            parentDirection = 0;
+        }
+        else if (v > currentNode->v) {
+            // printf("traversing right in delete %i\n", v);
+            // traverse right to find v
+            if (parentNode) {
+                pthread_mutex_unlock(&parentNode->node_lock);
+            }
+
+            parentNode = currentNode;
+            currentNode = currentNode->right;
+            parentDirection = 1;
+        }
+        else {
+            // printf("found v in delete %i\n", v);
+            // found v
+            if (currentNode->left == NULL) {
+                // right node but no left
+                // pthread_mutex_lock(&currentNode->right->node_lock);
+                if (parentNode) {
+                    if (parentDirection) {
+                        // coming from right
+                        parentNode->right = currentNode->right;
+                    }
+                    else {
+                        // coming from left
+                        parentNode->left = currentNode->right;
+                    }
+                    pthread_mutex_unlock(&parentNode->node_lock);
+                    
+                }
+                else {
+                    // if deleting root
+                    somewhere = currentNode->right;
+                }
+                // pthread_mutex_unlock(&currentNode->right->node_lock);
+                free(currentNode);
+                
+                
+                return somewhere;
+            }
+            else if (currentNode->right == NULL) {
+                // left node but no right
+                // pthread_mutex_lock(&currentNode->left->node_lock);
+                if (parentNode) {
+                    if (parentDirection) {
+                        // coming from right
+                        parentNode->right = currentNode->left;
+                    }
+                    else {
+                        // coming from left
+                        parentNode->left = currentNode->left;
+                    }
+                    pthread_mutex_unlock(&parentNode->node_lock);
+                }
+                else {
+                    // if deleting root, replace with child
+                    somewhere = currentNode->left;
+                }
+                // pthread_mutex_unlock(&currentNode->left->node_lock);
+                free(currentNode);
+
+                return somewhere;
+            }
+            else {
+                // both right and left node exist
+
+                // keep the right node, move the left node all the way to the bottom left of the right node
+                pthread_mutex_lock(&currentNode->right->node_lock);
+                pthread_mutex_lock(&currentNode->left->node_lock);
+                struct p *temp = currentNode->right;
+                while (temp->left != NULL) {
+                    pthread_mutex_lock(&temp->left->node_lock);
+                    temp = temp->left;
+                    pthread_mutex_unlock(&temp->node_lock);
+                }
+
+                temp->left = currentNode->left;
+                
+                if (parentNode) {
+                    if (parentDirection) {
+                        parentNode->right = currentNode->right;
+                    }
+                    else {
+                        parentNode->left = currentNode->right;
+                    }
+                    pthread_mutex_unlock(&parentNode->node_lock);
+                }
+                else {
+                    somewhere = currentNode->right;
+                }
+                
+                pthread_mutex_unlock(&currentNode->right->node_lock);
+                pthread_mutex_unlock(&currentNode->left->node_lock);
+
+                free(currentNode);
+                return somewhere;
+            }
+        }
     }
-
-    return somewhere;
 }
 
 int size(struct p* somewhere) {
@@ -176,8 +258,8 @@ int checkIntegrity(struct p* somewhere) {
 }
 
 void* workload() {
-    // pthread_t thread_id = pthread_self();
-    // printf("Thread ID: %lu\n", thread_id);
+    pthread_t thread_id = pthread_self();
+    printf("Thread ID: %lu\n", thread_id);
     // struct p* root = NULL;
 
 
@@ -189,9 +271,8 @@ void* workload() {
         // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
     }
 
-    // printf("***************************************************\n");
-    // printf("**********YOU MADE IT PAST THE FIRST LOOP**********\n");
-    // printf("***************************************************\n");
+    printf("Size (%lu): %d\n", thread_id, size(root));
+    printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
 
     // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
@@ -201,16 +282,16 @@ void* workload() {
     }
 
     // print size and checkIntegrity (not done when profiling)
-    // printf("Size: %d\n", size(root));
-    // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
+    printf("Size: %d\n", size(root));
+    printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
 
-    // printf("Exiting Thread ID: %lu\n", thread_id);
+    printf("Exiting Thread ID: %lu\n", thread_id);
     pthread_exit(NULL);
 }
 
 int main() {
     srand(time(NULL));
-    pthread_t threads[16];
+    pthread_t threads[numThreads];
 
     if (PAPI_VER_CURRENT != PAPI_library_init(PAPI_VER_CURRENT)) {
         printf("Can't initiate PAPI library!\n");
@@ -242,11 +323,11 @@ int main() {
     clock_t tic = clock();
     // printf("before workload\n");
     // Actual work goes here.
-    for (int j = 0; j < 16; j++) {
+    for (int j = 0; j < numThreads; j++) {
         pthread_create(&threads[j], NULL, workload, NULL);
     }
     
-    for (int j = 0; j < 16; j++) {
+    for (int j = 0; j < numThreads; j++) {
         pthread_join(threads[j], NULL);
     }
     // printf("after workload\n");
@@ -261,11 +342,11 @@ int main() {
     }
 
       /* Print out your profiling results here */
-    // for (int i = 0; i < nEvents; i++) {
-    //     PAPI_event_code_to_name(events[i], eventLabel);
-    //     printf("%s:\t%lld\t", eventLabel, values[i]);
-    // }
-    // printf("\n");
+    for (int i = 0; i < nEvents; i++) {
+        PAPI_event_code_to_name(events[i], eventLabel);
+        printf("%s:\t%lld\t", eventLabel, values[i]);
+    }
+    printf("\n");
 
     if ((retval = PAPI_cleanup_eventset(eventset)) != PAPI_OK) {
         printf("\n\t   Error : PAPI failed to clean the events from created Eventset");

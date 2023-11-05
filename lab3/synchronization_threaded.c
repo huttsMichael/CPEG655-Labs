@@ -13,6 +13,7 @@ long long values[1];
 int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
+struct p* root = NULL;
 
 // misc constants
 const int N = 64; // 64, 1048576
@@ -26,6 +27,7 @@ struct p {
 struct p *add(int v, struct p *somewhere) {
     // printf("add\n");
     if (somewhere == NULL) {
+        // printf("creating initial\n");
         struct p *newNode = (struct p *)malloc(sizeof(struct p));
         newNode->v = v;
         newNode->left = NULL;
@@ -33,10 +35,10 @@ struct p *add(int v, struct p *somewhere) {
         return newNode;
     }
 
-    if (v < somewhere->v) {
+    if (v <= somewhere->v) {
         somewhere->left = add(v, somewhere->left);
     } 
-    else if (v > somewhere->v) {
+    else {
         somewhere->right = add(v, somewhere->right);
     }
 
@@ -109,7 +111,7 @@ int checkIntegrity(struct p *somewhere) {
 
 void* workload() {
     // printf("workload\n");
-    struct p *root = NULL;
+    // struct p *root = NULL;
     
     // add random keys to the tree
     for (int i = 0; i < 1000; i++) {
@@ -118,6 +120,10 @@ void* workload() {
         root = add(key, root);
         pthread_mutex_unlock(&tree_mutex);
     }
+
+    // pthread_mutex_lock(&tree_mutex);
+    // printf("Size: %d\n", size(root));
+    // pthread_mutex_unlock(&tree_mutex);
 
     // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
