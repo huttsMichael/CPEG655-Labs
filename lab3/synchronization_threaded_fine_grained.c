@@ -10,7 +10,7 @@ long long values[1];
 int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
-const int N = 64; // 64, 1048576
+const int N = 1048576; // 64, 1048576
 struct p* root = NULL;
 
 struct p {
@@ -188,10 +188,6 @@ void* workload() {
         // printf("Size (%lu): %d\n", thread_id, size(root));
         // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
     }
-
-    // printf("***************************************************\n");
-    // printf("**********YOU MADE IT PAST THE FIRST LOOP**********\n");
-    // printf("***************************************************\n");
 
     // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
