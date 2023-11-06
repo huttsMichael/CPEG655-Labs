@@ -4,8 +4,8 @@
 #include <pthread.h>
 #include <papi.h>
 
-// define a mutex to protect the tree
-pthread_mutex_t tree_mutex = PTHREAD_MUTEX_INITIALIZER;
+// define a lock to protect the entire tree
+pthread_mutex_t treeMutex = PTHREAD_MUTEX_INITIALIZER;
 
 // papi setup pulled from lab 2
 int events[1] = {PAPI_TOT_CYC}; /*PAPI_L1_DCM, PAPI_L2_DCM, PAPI_TLB_DM*/
@@ -116,31 +116,31 @@ void* workload() {
     // add random keys to the tree
     for (int i = 0; i < 1000; i++) {
         int key = rand() % N + 1;
-        pthread_mutex_lock(&tree_mutex);
+        pthread_mutex_lock(&treeMutex);
         root = add(key, root);
-        pthread_mutex_unlock(&tree_mutex);
+        pthread_mutex_unlock(&treeMutex);
     }
 
-    // pthread_mutex_lock(&tree_mutex);
+    // pthread_mutex_lock(&treeMutex);
     // printf("Size: %d\n", size(root));
-    // pthread_mutex_unlock(&tree_mutex);
+    // pthread_mutex_unlock(&treeMutex);
 
     // add and remove random keys from the tree
     for (int i = 0; i < 100000; i++) {
         int key = rand() % N + 1;
-        pthread_mutex_lock(&tree_mutex);
+        pthread_mutex_lock(&treeMutex);
         root = add(key, root);
-        // pthread_mutex_unlock(&tree_mutex);
-        // pthread_mutex_lock(&tree_mutex);
+        // pthread_mutex_unlock(&treeMutex);
+        // pthread_mutex_lock(&treeMutex);
         root = delete(key, root);
-        pthread_mutex_unlock(&tree_mutex);
+        pthread_mutex_unlock(&treeMutex);
     }
 
     // print size and checkIntegrity (not done when profiling)
-    // pthread_mutex_lock(&tree_mutex);
+    // pthread_mutex_lock(&treeMutex);
     // printf("Size: %d\n", size(root));
     // printf("Tree integrity: %s\n", checkIntegrity(root) ? "Valid" : "Invalid");
-    // pthread_mutex_unlock(&tree_mutex);
+    // pthread_mutex_unlock(&treeMutex);
 
     pthread_exit(NULL);
 }

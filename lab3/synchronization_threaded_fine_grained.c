@@ -4,13 +4,12 @@
 #include <pthread.h>
 #include <papi.h>
 
-pthread_mutex_t initialLock = PTHREAD_MUTEX_INITIALIZER;
 int events[1] = {PAPI_TOT_CYC};
 long long values[1];
 int eventset;
 int nEvents, retval;
 char eventLabel[PAPI_MAX_STR_LEN];
-const int N = 1048576; // 64, 1048576
+const int N = 64; // 64, 1048576
 struct p* root = NULL;
 
 struct p {

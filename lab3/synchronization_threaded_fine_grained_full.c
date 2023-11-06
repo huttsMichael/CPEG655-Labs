@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include <papi.h>
 
-pthread_mutex_t initialLock = PTHREAD_MUTEX_INITIALIZER;
 int events[1] = {PAPI_TOT_CYC};
 long long values[1];
 int eventset;
