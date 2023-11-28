@@ -8,11 +8,18 @@ __global__ void matrixMul(float *C, float *A, float *B, int N) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
 
+    // Check if the current thread's indices are within the matrix dimensions
     if (i < N && j < N) {
+        // Initialize a variable to store the sum for the current element of matrix C
         float sum = 0.0f;
+
+        // Perform the actual matrix multiplication for the current element (i, j)
         for (int k = 0; k < N; ++k) {
+            // Multiply corresponding elements from matrices A and B and accumulate the result
             sum += A[i * N + k] * B[k * N + j];
         }
+
+        // Store the final result in the corresponding element of matrix C
         C[i * N + j] = sum;
     }
 }
@@ -25,16 +32,30 @@ void mm(float *C, float *A, float *B, int N) {
                 C[i * N + j] += A[i * N + k] * B[k * N + j];
 }
 
-// Function to calculate Root Mean Square Error (RMSE)
+// Function to calculate Root Mean Square Error (RMSE) between two matrices
 float calculateRMSE(float *A, float *B, int size) {
+    // Initialize variable to store the sum of squared differences
     float sumSquaredDiff = 0.0f;
+
+    // Iterate through all elements of the matrices
     for (int i = 0; i < size; i++) {
+        // Calculate the difference between corresponding elements of matrices A and B
         float diff = A[i] - B[i];
+
+        // Accumulate the squared difference
         sumSquaredDiff += diff * diff;
     }
+
+    // Calculate the mean squared difference
     float meanSquaredDiff = sumSquaredDiff / size;
-    return sqrtf(meanSquaredDiff);
+
+    // Calculate the square root of the mean squared difference to get RMSE
+    float rmse = sqrtf(meanSquaredDiff);
+
+    // Return the calculated RMSE
+    return rmse;
 }
+
 
 int main(int argc, char **argv) {
     struct timeval begin, end;
@@ -61,7 +82,7 @@ int main(int argc, char **argv) {
         cudaMemcpy(d_B, h_B, size * sizeof(float), cudaMemcpyHostToDevice);
 
         // Set up the execution configuration
-        dim3 threadsPerBlock(16, 16);
+        dim3 threadsPerBlock(32, 32); // max threads per block = 1024, 32*32=1024
         dim3 numBlocks(1, 1); // Use only one thread block
 
         // Measure the computation time for GPU version
