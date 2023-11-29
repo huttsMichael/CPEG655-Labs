@@ -89,13 +89,6 @@ int main(int argc, char **argv) {
         // Launch the CUDA kernel
         matrixMul<<<numBlocks, threadsPerBlock>>>(d_C, d_A, d_B, N);
 
-
-        // Measure the computation time for GPU version
-        gettimeofday(&begin, NULL);
-
-        // Launch the CUDA kernel
-        matrixMul<<<numBlocks, threadsPerBlock>>>(d_C, d_A, d_B, N);
-
         // Wait for the kernel to finish
         cudaDeviceSynchronize();
 
