@@ -57,70 +57,87 @@ float calculateRMSE(float *A, float *B, int size) {
 int main(int argc, char **argv) {
     struct timeval begin, end;
     int sizes[] = {16, 32};
+    int num_runs = 5000; 
 
-    // Run for both sizes
     for (int sizeIndex = 0; sizeIndex < 2; sizeIndex++) {
         int N = sizes[sizeIndex];
         int size = N * N;
 
-        // Allocate host memory
-        float *h_A = (float *)malloc(size * sizeof(float));
-        float *h_B = (float *)malloc(size * sizeof(float));
-        float *h_C_cpu = (float *)malloc(size * sizeof(float));
-        float *h_C_gpu = (float *)malloc(size * sizeof(float));
+        double total_gpu_time = 0.0;
+        double total_cpu_time = 0.0;
 
-        // Allocate device memory
-        float *d_A, *d_B, *d_C;
-        cudaMalloc((void **)&d_A, size * sizeof(float));
-        cudaMalloc((void **)&d_B, size * sizeof(float));
-        cudaMalloc((void **)&d_C, size * sizeof(float));
+        for (int run = 0; run < num_runs; run++) {
+            // Allocate host memory
+            float *h_A = (float *)malloc(size * sizeof(float));
+            float *h_B = (float *)malloc(size * sizeof(float));
+            float *h_C_cpu = (float *)malloc(size * sizeof(float));
+            float *h_C_gpu = (float *)malloc(size * sizeof(float));
 
-        // Copy host matrices to device
-        cudaMemcpy(d_A, h_A, size * sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_B, h_B, size * sizeof(float), cudaMemcpyHostToDevice);
+            // Allocate device memory
+            float *d_A, *d_B, *d_C;
+            cudaMalloc((void **)&d_A, size * sizeof(float));
+            cudaMalloc((void **)&d_B, size * sizeof(float));
+            cudaMalloc((void **)&d_C, size * sizeof(float));
 
-        // Set up the execution configuration
-        dim3 threadsPerBlock(32, 32); // max threads per block = 1024, 32*32=1024
-        dim3 numBlocks(1, 1); // Use only one thread block
+            // Copy host matrices to device
+            cudaMemcpy(d_A, h_A, size * sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(d_B, h_B, size * sizeof(float), cudaMemcpyHostToDevice);
 
-        // Measure the computation time for GPU version
-        gettimeofday(&begin, NULL);
+            // Set up the execution configuration
+            dim3 threadsPerBlock(32, 32);
+            dim3 numBlocks(1, 1);
 
-        // Launch the CUDA kernel
-        matrixMul<<<numBlocks, threadsPerBlock>>>(d_C, d_A, d_B, N);
+            // Measure the computation time for GPU version
+            gettimeofday(&begin, NULL);
 
-        // Wait for the kernel to finish
-        cudaDeviceSynchronize();
+            // Launch the CUDA kernel
+            matrixMul<<<numBlocks, threadsPerBlock>>>(d_C, d_A, d_B, N);
 
-        gettimeofday(&end, NULL);
+            // Wait for the kernel to finish
+            cudaDeviceSynchronize();
 
-        fprintf(stdout, "GPU time for N=%d: %lf\n", N, (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) * 1.0 / 1000000);
+            gettimeofday(&end, NULL);
 
-        // Copy the result back to the host
-        cudaMemcpy(h_C_gpu, d_C, size * sizeof(float), cudaMemcpyDeviceToHost);
+            double elapsed_gpu_time = (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) * 1.0 / 1000000;
+            total_gpu_time += elapsed_gpu_time;
 
-        // Measure the computation time for CPU version
-        gettimeofday(&begin, NULL);
+            // fprintf(stdout, "Run %d - GPU time for N=%d: %lf\n", run + 1, N, elapsed_gpu_time);
 
-        // Call the CPU matrix multiplication function
-        mm(h_C_cpu, h_A, h_B, N);
+            // Copy the result back to the host
+            cudaMemcpy(h_C_gpu, d_C, size * sizeof(float), cudaMemcpyDeviceToHost);
 
-        gettimeofday(&end, NULL);
+            // Measure the computation time for CPU version
+            gettimeofday(&begin, NULL);
 
-        fprintf(stdout, "CPU time for N=%d: %lf\n", N, (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) * 1.0 / 1000000);
+            // Call the CPU matrix multiplication function
+            mm(h_C_cpu, h_A, h_B, N);
 
-        // Verify the correctness by calculating RMSE
-        float rmse = calculateRMSE(h_C_cpu, h_C_gpu, size);
-        fprintf(stdout, "RMSE for N=%d: %e\n", N, rmse);
+            gettimeofday(&end, NULL);
 
-        // Free device and host memory
-        cudaFree(d_A);
-        cudaFree(d_B);
-        cudaFree(d_C);
-        free(h_A);
-        free(h_B);
-        free(h_C_cpu);
-        free(h_C_gpu);
+            double elapsed_cpu_time = (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) * 1.0 / 1000000;
+            total_cpu_time += elapsed_cpu_time;
+
+            // fprintf(stdout, "Run %d - CPU time for N=%d: %lf\n", run + 1, N, elapsed_cpu_time);
+
+            // Verify the correctness by calculating RMSE (commented out for benchmarking)
+            // float rmse = calculateRMSE(h_C_cpu, h_C_gpu, size);
+            // fprintf(stdout, "RMSE for N=%d: %e\n", N, rmse);
+
+            // Free device and host memory
+            cudaFree(d_A);
+            cudaFree(d_B);
+            cudaFree(d_C);
+            free(h_A);
+            free(h_B);
+            free(h_C_cpu);
+            free(h_C_gpu);
+        }
+
+        double avg_gpu_time = total_gpu_time / num_runs;
+        double avg_cpu_time = total_cpu_time / num_runs;
+
+        fprintf(stdout, "Average GPU time for N=%d: %lf\n", N, avg_gpu_time);
+        fprintf(stdout, "Average CPU time for N=%d: %lf\n", N, avg_cpu_time);
     }
 
     return 0;
