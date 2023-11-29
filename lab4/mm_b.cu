@@ -95,7 +95,9 @@ int main(int argc, char **argv) {
         // Measure the computation time for GPU version
         gettimeofday(&begin, NULL);
 
-        // Launch the CUDA kernel
+        // Launch the CUDA kernel with shared memory allocation
+        // The third parameter specifies the size of dynamically allocated shared memory,
+        // which is used to cache matrix tiles for improved data locality
         matrixMulTiled<<<numBlocks, threadsPerBlock, 2 * tile_size * tile_size * sizeof(float)>>>(d_C, d_A, d_B, N, tile_size);
 
         // Wait for the kernel to finish
