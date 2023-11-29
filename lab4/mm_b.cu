@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
     struct timeval begin, end;
     int tile_sizes[] = {8, 16};
 
+    // Run for both sizes
     for (int sizeIndex = 0; sizeIndex < 2; sizeIndex++) {
         int tile_size = tile_sizes[sizeIndex];
 

@@ -65,8 +65,9 @@ int main(int argc, char **argv) {
     struct timeval begin, end;
     int NB_values[] = {2, 4, 8, 16, 32};
     int NT_values[] = {2, 4, 8, 16, 32};
-    int num_runs = 10; // Adjust the number of runs as needed
-    
+    int num_runs = 10; 
+
+    // Run for all inputs multiple times times over
     for (int nbIndex = 0; nbIndex < 5; nbIndex++) {
         for (int ntIndex = 0; ntIndex < 5; ntIndex++) {
             int NB = NB_values[nbIndex];

@@ -57,7 +57,8 @@ float calculateRMSE(float *A, float *B, int size) {
 int main(int argc, char **argv) {
     struct timeval begin, end;
     int sizes[] = {16, 32};
-    
+
+    // Run for both sizes
     for (int sizeIndex = 0; sizeIndex < 2; sizeIndex++) {
         int N = sizes[sizeIndex];
         int size = N * N;
