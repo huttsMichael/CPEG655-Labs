@@ -80,7 +80,6 @@ int main(int argc, char **argv) {
             // Allocate host memory
             float *h_A = (float *)malloc(size * sizeof(float));
             float *h_B = (float *)malloc(size * sizeof(float));
-            float *h_C_cpu = (float *)malloc(size * sizeof(float));
             float *h_C_gpu = (float *)malloc(size * sizeof(float));
 
             // Allocate device memory
@@ -113,27 +112,12 @@ int main(int argc, char **argv) {
             // Copy the result back to the host
             cudaMemcpy(h_C_gpu, d_C, size * sizeof(float), cudaMemcpyDeviceToHost);
 
-            // Measure the computation time for CPU version
-            gettimeofday(&begin, NULL);
-
-            // Call the CPU matrix multiplication function
-            mm(h_C_cpu, h_A, h_B, N);
-
-            gettimeofday(&end, NULL);
-
-            fprintf(stdout, "CPU time for N=%d: %lf\n", N, (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) * 1.0 / 1000000);
-
-            // Verify the correctness by calculating RMSE
-            float rmse = calculateRMSE(h_C_cpu, h_C_gpu, size);
-            fprintf(stdout, "RMSE for N=%d, NB=%d, NT=%d: %e\n", N, NB, NT, rmse);
-
             // Free device and host memory
             cudaFree(d_A);
             cudaFree(d_B);
             cudaFree(d_C);
             free(h_A);
             free(h_B);
-            free(h_C_cpu);
             free(h_C_gpu);
         }
     }
