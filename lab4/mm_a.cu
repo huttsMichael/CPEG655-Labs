@@ -8,20 +8,17 @@ __global__ void matrixMul(float *C, float *A, float *B, int N) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    // Check if the current thread's indices are within the matrix dimensions
-    if (i < N && j < N) {
-        // Initialize a variable to store the sum for the current element of matrix C
-        float sum = 0.0f;
+    // Initialize a variable to store the sum for the current element of matrix C
+    float sum = 0.0f;
 
-        // Perform the actual matrix multiplication for the current element (i, j)
-        for (int k = 0; k < N; ++k) {
-            // Multiply corresponding elements from matrices A and B and accumulate the result
-            sum += A[i * N + k] * B[k * N + j];
-        }
-
-        // Store the final result in the corresponding element of matrix C
-        C[i * N + j] = sum;
+    // Perform the actual matrix multiplication for the current element (i, j)
+    for (int k = 0; k < N; ++k) {
+        // Multiply corresponding elements from matrices A and B and accumulate the result
+        sum += A[i * N + k] * B[k * N + j];
     }
+
+    // Store the final result in the corresponding element of matrix C
+    C[i * N + j] = sum;
 }
 
 // Host code for matrix multiplication
