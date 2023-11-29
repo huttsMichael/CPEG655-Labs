@@ -71,7 +71,9 @@ float calculateRMSE(float *A, float *B, int size) {
 }
 
 int main(int argc, char **argv) {
-    struct timeval begin, end;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
     int NB_values[] = {2, 4, 8, 16, 32};
     int NT_values[] = {2, 4, 8, 16, 32};
     int num_runs = 10; 
@@ -111,18 +113,18 @@ int main(int argc, char **argv) {
                 dim3 numBlocks(NK, NK);
 
                 // measure the computation time for GPU version
-                gettimeofday(&begin, NULL);
+                cudaEventRecord(start, 0);
 
                 // launch the CUDA kernel
-                matrixMulTiled<<<numBlocks, threadsPerBlock, 2 * NB * NT * sizeof(float)>>>(d_C, d_A, d_B, N, NB);
+                matrixMulTiled<<<numBlocks, threadsPerBlock>>>(d_C, d_A, d_B, N, NB);
 
+                cudaEventRecord(stop, 0);
                 // wait for the kernel to finish
                 cudaDeviceSynchronize();
 
-                gettimeofday(&end, NULL);
-
-                double elapsed_time = (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) * 1.0 / 1000000;
-                total_gpu_time += elapsed_time;
+                float elapsed_gpu_time;
+                cudaEventElapsedTime(&elapsed_gpu_time, start, stop);
+                total_gpu_time += elapsed_gpu_time;
 
                 // fprintf(stdout, "run %d - GPU time for N=%d, NB=%d, NT=%d: %lf\n", run + 1, N, NB, NT, elapsed_time);
 
