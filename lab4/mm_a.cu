@@ -98,6 +98,7 @@ int main(int argc, char **argv) {
 
             gettimeofday(&end, NULL);
 
+            // calculate time down to microsecond
             double elapsed_gpu_time = (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) * 1.0 / 1000000;
             total_gpu_time += elapsed_gpu_time;
 
@@ -114,6 +115,7 @@ int main(int argc, char **argv) {
 
             gettimeofday(&end, NULL);
 
+            // calculate time down to microsecond
             double elapsed_cpu_time = (end.tv_sec - begin.tv_sec) + (end.tv_usec - begin.tv_usec) * 1.0 / 1000000;
             total_cpu_time += elapsed_cpu_time;
 
