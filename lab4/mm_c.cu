@@ -49,15 +49,25 @@ void mm(float *C, float *A, float *B, int N) {
                 C[i * N + j] += A[i * N + k] * B[k * N + j];
 }
 
-// function to calculate root mean square error (RMSE) between two matrices
+// function to calculate root mean square error 
 float calculateRMSE(float *A, float *B, int size) {
     float sumSquaredDiff = 0.0f;
+
+    // iterate through all elements of the matrices
     for (int i = 0; i < size; i++) {
+        // calculate the difference between corresponding elements of matrices A and B
         float diff = A[i] - B[i];
+
         sumSquaredDiff += diff * diff;
     }
+
+    // calculate the mean squared difference
     float meanSquaredDiff = sumSquaredDiff / size;
-    return sqrtf(meanSquaredDiff);
+
+    // calculate the square root of the mean squared difference to get RMSE
+    float rmse = sqrtf(meanSquaredDiff);
+
+    return rmse;
 }
 
 int main(int argc, char **argv) {
