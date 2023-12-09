@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <cmath>
 
-// Function to initialize a matrix with random values using rand()
+// Function to initialize a matrix with random values using C rand()
 void initializeRandomMatrix(float* matrix, int size) {
     for (int i = 0; i < size * size; ++i) {
         // Generate a random float value between 1.0 and 10.0
