@@ -1,6 +1,7 @@
 #include <iostream>
 #include <immintrin.h>
 #include <cstdlib>
+#include <cmath>
 
 // Function to initialize a matrix with random values using rand()
 void initializeRandomMatrix(float* matrix, int size) {
@@ -55,6 +56,27 @@ void printMatrix(const float* matrix, int rows, int cols) {
     std::cout << std::endl;
 }
 
+// Function to calculate root mean square error
+float calculateRMSE(float* A, float* B, int size) {
+    float sumSquaredDiff = 0.0f;
+
+    // Iterate through all elements of the matrices
+    for (int i = 0; i < size * size; i++) {
+        // Calculate the difference between corresponding elements of matrices A and B
+        float diff = A[i] - B[i];
+
+        sumSquaredDiff += diff * diff;
+    }
+
+    // Calculate the mean squared difference
+    float meanSquaredDiff = sumSquaredDiff / (size * size);
+
+    // Calculate the square root of the mean squared difference to get RMSE
+    float rmse = std::sqrt(meanSquaredDiff);
+
+    return rmse;
+}
+
 int main() {
     const int size = 4;
 
@@ -83,6 +105,10 @@ int main() {
 
     std::cout << "Non-SSE Matrix Multiplication Result:\n";
     printMatrix(C_non_sse, size, size);
+
+    // Calculate and print RMSE
+    float rmse = calculateRMSE(C_sse, C_non_sse, size);
+    std::cout << "Root Mean Square Error (RMSE): " << rmse << std::endl;
 
     return 0;
 }
