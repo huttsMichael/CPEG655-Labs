@@ -2,6 +2,15 @@
 #include <immintrin.h>
 // #include <chrono> // chrono not working on WSL?
 #include <ctime>
+#include <cstdlib>
+
+// Function to initialize a matrix with random values using rand()
+void initializeRandomMatrix(float* matrix, int size) {
+    for (int i = 0; i < size * size; ++i) {
+        // Generate a random float value between 1.0 and 10.0
+        matrix[i] = static_cast<float>(rand()) / RAND_MAX * 9.0 + 1.0;
+    }
+}
 
 // Function to perform SSE-based matrix multiplication
 void matrixMultiplySSE(float* A, float* B, float* C, int size) {
@@ -53,15 +62,12 @@ int main() {
     const int size = 4;
     const int num_repeats = 10000;
 
-    float A[size * size] = {1.0, 2.0, 3.0, 4.0,
-                            5.0, 6.0, 7.0, 8.0,
-                            9.0, 10.0, 11.0, 12.0,
-                            13.0, 14.0, 15.0, 16.0};
+    float A[size * size];
+    float B[size * size];
 
-    float B[size * size] = {1.0, 0.0, 0.0, 0.0,
-                            0.0, 1.0, 0.0, 0.0,
-                            0.0, 0.0, 1.0, 0.0,
-                            0.0, 0.0, 0.0, 1.0};
+    // Initialize matrices A and B with random values
+    initializeRandomMatrix(A, size);
+    initializeRandomMatrix(B, size);
 
     float C_sse[size * size] = {0.0};
     float C_non_sse[size * size] = {0.0};
@@ -85,6 +91,12 @@ int main() {
     double avg_duration_non_sse = duration_non_sse / num_repeats * 1e6; // Convert to microseconds
 
     // Print the results
+    std::cout << "Matrix A:\n";
+    printMatrix(A, size, size);
+
+    std::cout << "Matrix B:\n";
+    printMatrix(B, size, size);
+
     std::cout << "SSE-based Matrix Multiplication Result:\n";
     printMatrix(C_sse, size, size);
     std::cout << "Average time taken by SSE-based matrix multiplication: " << avg_duration_sse << " microseconds\n";
