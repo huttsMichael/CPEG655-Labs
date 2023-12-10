@@ -15,23 +15,23 @@ void initializeRandomMatrix(float* matrix, int size) {
 void matrixMultiplySSE(float* A, float* B, float* C, int size) {
     // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
-        // iterate over each 4-element column of matrix B (assuming size is a multiple of 4)
+        // iterate over each column of matrix B (assumes size is a multiple of 4)
         for (int j = 0; j < size; j += 4) {
-            // load a single element from the current row of A and broadcast it to a vector
+            // load a single element from the current row of A and fill a vector
             __m128 rowA = _mm_set1_ps(A[i * size + j]);
 
-            // load a 4-element vector from the current column of B
+            // load a vector from the current column of B
             __m128 vecB = _mm_loadu_ps(B + j);
 
-            // multiply the broadcasted rowA vector with the loaded vecB vector element-wise
+            // multiply the rowA vector with the loaded vecB vector element-wise
             __m128 result = _mm_mul_ps(rowA, vecB);
 
-            // perform the same operation for the remaining elements in the row and column
+            // perform the same operation for the remaining elements in the row and column (better way to do this?)
             for (int k = 1; k < 4; k++) {
                 rowA = _mm_set1_ps(A[i * size + j + k]);
                 vecB = _mm_loadu_ps(B + k * size + j);
 
-                // add the element-wise product to the result vector
+                // add the product to the result vector
                 result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
             }
 
