@@ -3,65 +3,66 @@
 #include <cstdlib>
 #include <cmath>
 
-// Function to initialize a matrix with random values using C rand()
+// function to initialize a matrix with random values using C rand()
 void initializeRandomMatrix(float* matrix, int size) {
     for (int i = 0; i < size * size; ++i) {
-        // Generate a random float value between 1.0 and 10.0
+        // generate a random float value between 1.0 and 10.0
         matrix[i] = static_cast<float>(rand()) / RAND_MAX * 9.0 + 1.0;
     }
 }
 
-// Function to perform SSE-based matrix multiplication
+// function to perform SSE-based matrix multiplication
 void matrixMultiplySSE(float* A, float* B, float* C, int size) {
-    // Iterate over each row of matrix A
+    // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
-        // Iterate over each 4-element column of matrix B (assuming size is a multiple of 4)
+        // iterate over each 4-element column of matrix B (assuming size is a multiple of 4)
         for (int j = 0; j < size; j += 4) {
-            // Load a single element from the current row of A and broadcast it to a vector
+            // load a single element from the current row of A and broadcast it to a vector
             __m128 rowA = _mm_set1_ps(A[i * size + j]);
 
-            // Load a 4-element vector from the current column of B
+            // load a 4-element vector from the current column of B
             __m128 vecB = _mm_loadu_ps(B + j);
 
-            // Multiply the broadcasted rowA vector with the loaded vecB vector element-wise
+            // multiply the broadcasted rowA vector with the loaded vecB vector element-wise
             __m128 result = _mm_mul_ps(rowA, vecB);
 
-            // Perform the same operation for the remaining elements in the row and column
+            // perform the same operation for the remaining elements in the row and column
             for (int k = 1; k < 4; k++) {
                 rowA = _mm_set1_ps(A[i * size + j + k]);
                 vecB = _mm_loadu_ps(B + k * size + j);
 
-                // Add the element-wise product to the result vector
+                // add the element-wise product to the result vector
                 result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
             }
 
-            // Store the result vector to the current position in matrix C
+            // store the result vector to the current position in matrix C
             _mm_storeu_ps(C + i * size + j, result);
         }
     }
 }
-// Function to perform matrix multiplication without vectorization
+
+// function to perform matrix multiplication without vectorization
 void matrixMultiply(const float* A, const float* B, float* C, int size) {
-    // Iterate over each row of matrix A
+    // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
-        // Iterate over each column of matrix B
+        // iterate over each column of matrix B
         for (int j = 0; j < size; j++) {
-            // Initialize the sum for the current position in matrix C
+            // initialize the sum for the current position in matrix C
             float sum = 0.0;
 
-            // Iterate over each element in the row of A and column of B
+            // iterate over each element in the row of A and column of B
             for (int k = 0; k < size; k++) {
-                // Multiply the corresponding elements and accumulate the result in the sum
+                // multiply the corresponding elements and accumulate the result in the sum
                 sum += A[i * size + k] * B[k * size + j];
             }
 
-            // Store the accumulated sum in the current position of matrix C
+            // store the accumulated sum in the current position of matrix C
             C[i * size + j] = sum;
         }
     }
 }
 
-// Function to print a matrix
+// function to print a matrix
 void printMatrix(const float* matrix, int rows, int cols) {
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
@@ -72,22 +73,22 @@ void printMatrix(const float* matrix, int rows, int cols) {
     std::cout << std::endl;
 }
 
-// Function to calculate root mean square error
+// function to calculate root mean square error
 float calculateRMSE(float* A, float* B, int size) {
     float sumSquaredDiff = 0.0f;
 
-    // Iterate through all elements of the matrices
+    // iterate through all elements of the matrices
     for (int i = 0; i < size * size; i++) {
-        // Calculate the difference between corresponding elements of matrices A and B
+        // calculate the difference between corresponding elements of matrices A and B
         float diff = A[i] - B[i];
 
         sumSquaredDiff += diff * diff;
     }
 
-    // Calculate the mean squared difference
+    // calculate the mean squared difference
     float meanSquaredDiff = sumSquaredDiff / (size * size);
 
-    // Calculate the square root of the mean squared difference to get RMSE
+    // calculate the square root of the mean squared difference to get RMSE
     float rmse = std::sqrt(meanSquaredDiff);
 
     return rmse;
@@ -99,7 +100,7 @@ int main() {
     float A[size * size];
     float B[size * size];
 
-    // Initialize matrices A and B with random values
+    // initialize matrices A and B with random values
     initializeRandomMatrix(A, size);
     initializeRandomMatrix(B, size);
 
@@ -109,7 +110,7 @@ int main() {
     matrixMultiplySSE(A, B, C_sse, size);
     matrixMultiply(A, B, C_non_sse, size);
 
-    // Print the results
+    // print the results
     std::cout << "Matrix A:\n";
     printMatrix(A, size, size);
 
@@ -122,7 +123,7 @@ int main() {
     std::cout << "Non-SSE Matrix Multiplication Result:\n";
     printMatrix(C_non_sse, size, size);
 
-    // Calculate and print RMSE
+    // calculate and print RMSE
     float rmse = calculateRMSE(C_sse, C_non_sse, size);
     std::cout << "Root Mean Square Error (RMSE): " << rmse << std::endl;
 
