@@ -17,20 +17,20 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
     // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
         // iterate over each column of matrix B 
-            __m128 rowA, vecB;
-            __m128 result = _mm_setzero_ps();
-            for (int k = 0; k < 4; k++) {
-                // load a single element from the current row of A and fill a vector
-                rowA = _mm_set1_ps(A[i * size + k]);
-                // load a vector from the current column of B
-                vecB = _mm_loadu_ps(B + k * size);
+        __m128 rowA, vecB;
+        __m128 result = _mm_setzero_ps();
+        for (int k = 0; k < 4; k++) {
+            // load a single element from the current row of A and fill a vector
+            rowA = _mm_set1_ps(A[i * size + k]);
+            // load a vector from the current column of B
+            vecB = _mm_loadu_ps(B + k * size);
 
-                // multiply the rowA vector with the loaded vecB vector element-wise and add to the result
-                result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-            }
+            // multiply the rowA vector with the loaded vecB vector element-wise and add to the result
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        }
 
-            // store the result vector to the current position in matrix C
-            _mm_storeu_ps(C + i * size, result);
+        // store the result vector to the current position in matrix C
+        _mm_storeu_ps(C + i * size, result);
     }
 }
 
