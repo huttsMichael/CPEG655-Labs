@@ -40,16 +40,16 @@ void matrixMultiplySSEReorder(float* A, float* B, float* C, int size) {
     // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
         // iterate over each column of matrix B 
-        __m128 rowA, vecB;
+        __m128 rowB, vecA;
         __m128 result = _mm_setzero_ps();
         for (int k = 0; k < size; k++) {
             // load a single element from the current row of A and fill a vector
-            rowA = _mm_set1_ps(A[i * size + k]);
+            rowB = _mm_set1_ps(B[i * size + k]);
             // load a vector from the current column of B
-            vecB = _mm_loadu_ps(B + k * size);
+            vecA = _mm_loadu_ps(A + k * size);
 
-            // multiply the rowA vector with the loaded vecB vector element-wise and add to the result
-            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+            // multiply the rowB vector with the loaded vecA vector element-wise and add to the result
+            result = _mm_add_ps(result, _mm_mul_ps(rowB, vecA));
         }
 
         // store the result vector to the current position in matrix C
