@@ -6,6 +6,7 @@
 
 // function to initialize a matrix with random values using C rand()
 void initializeRandomMatrix(float* matrix, int size) {
+    srand((unsigned)time(0)); 
     for (int i = 0; i < size * size; ++i) {
         // generate a random float value between 1.0 and 10.0
         matrix[i] = static_cast<float>(rand()) / RAND_MAX * 9.0 + 1.0;

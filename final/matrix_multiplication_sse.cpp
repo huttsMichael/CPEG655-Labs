@@ -5,6 +5,7 @@
 
 // function to initialize a matrix with random values using C rand()
 void initializeRandomMatrix(float* matrix, int size) {
+    srand((unsigned)time(0)); 
     for (int i = 0; i < size * size; ++i) {
         // generate a random float value between 1.0 and 10.0
         matrix[i] = static_cast<float>(rand()) / RAND_MAX * 9.0 + 1.0;
@@ -35,7 +36,6 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
 
 // function to perform matrix multiplication without vectorization
 void matrixMultiply(const float* A, const float* B, float* C, int size) {
-    std::cout << "\nCPU:";
     // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
         // iterate over each column of matrix B
@@ -46,13 +46,11 @@ void matrixMultiply(const float* A, const float* B, float* C, int size) {
             // iterate over each element in the row of A and column of B
             for (int k = 0; k < size; k++) {
                 // multiply the corresponding elements and accumulate the result in the sum
-                std::cout << "(" << i << "," << j << "," << k << ") ";
                 sum += A[i * size + k] * B[k * size + j];
             }
 
             // store the accumulated sum in the current position of matrix C
             C[i * size + j] = sum;
-            std::cout << std::endl;
         }
     }
 }
