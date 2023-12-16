@@ -36,25 +36,23 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
 
 // function to perform SSE-based matrix multiplication with JIK ordering
 void matrixMultiplySSEReorder(float* A, float* B, float* C, int size) {
-    // iterate over each column of matrix B 
-    for (int j = 0; j < size; j += size) {
-        // iterate over each row of matrix A
-        for (int i = 0; i < size; i++) {
-            __m128 rowA, vecB;
-            __m128 result = _mm_setzero_ps();
-            for (int k = 0; k < 4; k++) {
-                // load a single element from the current row of A and fill a vector
-                rowA = _mm_set1_ps(A[i * size + j + k]);
-                // load a vector from the current column of B
-                vecB = _mm_loadu_ps(B + k * size + j);
+    // iterate over each row of matrix A
+    for (int i = 0; i < size; i++) {
+        // iterate over each column of matrix B 
+        __m128 rowA, vecB;
+        __m128 result = _mm_setzero_ps();
+        for (int k = 0; k < 4; k++) {
+            // load a single element from the current row of A and fill a vector
+            rowA = _mm_set1_ps(A[i * size + k]);
+            // load a vector from the current column of B
+            vecB = _mm_loadu_ps(B + k * size);
 
-                // multiply the rowA vector with the loaded vecB vector element-wise and add to the result
-                result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-            }
-
-            // store the result vector to the current position in matrix C
-            _mm_storeu_ps(C + i * size + j, result);
+            // multiply the rowA vector with the loaded vecB vector element-wise and add to the result
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
         }
+
+        // store the result vector to the current position in matrix C
+        _mm_storeu_ps(C + i * size, result);
     }
 }
 
@@ -91,108 +89,93 @@ void matrixMultiplySSEUnrolled(float* A, float* B, float* C, int size) {
 
 // function to perform SSE-based matrix multiplication (extremely unrolled)
 void matrixMultiplySSEUnrolledExtreme(float* A, float* B, float* C, int size) {
-    // iterate over each row of matrix A
-    for (int i = 0; i < size; i++) {
-        // load column 0 from the current row of A and fill a vector
-        __m128 rowA = _mm_set1_ps(A[i * size]);
+    // load column 0 from the current row of A and fill a vector
+    __m128 rowA = _mm_set1_ps(A[0]);
 
-        // load a vector from the current column of B
-        __m128 vecB = _mm_loadu_ps(B);
+    // load a vector from the current column of B
+    __m128 vecB = _mm_loadu_ps(B);
 
-        // multiply the rowA vector with the loaded vecB vector element-wise
-        __m128 result = _mm_mul_ps(rowA, vecB);
+    // multiply the rowA vector with the loaded vecB vector element-wise
+    __m128 result = _mm_mul_ps(rowA, vecB);
 
-        // repeat for column 1
-        rowA = _mm_set1_ps(A[i * size + 1]);
-        vecB = _mm_loadu_ps(B + (1 * size));
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-        // repeat for column 2
-        rowA = _mm_set1_ps(A[i * size + 2]);
-        vecB = _mm_loadu_ps(B + (2 * size));
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-        // repeat for column 3
-        rowA = _mm_set1_ps(A[i * size + 3]);
-        vecB = _mm_loadu_ps(B + (3 * size));
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 1
+    rowA = _mm_set1_ps(A[0 * size + 1]);
+    vecB = _mm_loadu_ps(B + (1 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 2
+    rowA = _mm_set1_ps(A[0 * size + 2]);
+    vecB = _mm_loadu_ps(B + (2 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 3
+    rowA = _mm_set1_ps(A[0 * size + 3]);
+    vecB = _mm_loadu_ps(B + (3 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
 
-        // store the result vector to the current position in matrix C
-        _mm_storeu_ps(C + i * size, result);
+    // store the result vector to the current position in matrix C
+    _mm_storeu_ps(C + 0 * size, result);
 
-        // load column 0 from the current row of A and fill a vector
-        rowA = _mm_set1_ps(A[i * size + 1*size]);
+    result = _mm_setzero_ps();
 
-        // load a vector from the current column of B
-        vecB = _mm_loadu_ps(B + 1*size);
+    rowA = _mm_set1_ps(A[1 * size + 0]);
+    vecB = _mm_loadu_ps(B + (0 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 1
+    rowA = _mm_set1_ps(A[1 * size + 1]);
+    vecB = _mm_loadu_ps(B + (1 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 2
+    rowA = _mm_set1_ps(A[1 * size + 2]);
+    vecB = _mm_loadu_ps(B + (2 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 3
+    rowA = _mm_set1_ps(A[1 * size + 3]);
+    vecB = _mm_loadu_ps(B + (3 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
 
-        // multiply the rowA vector with the loaded vecB vector element-wise
-        result = _mm_mul_ps(rowA, vecB);
+    // store the result vector to the current position in matrix C
+    _mm_storeu_ps(C + 1 * size, result);
 
-        // repeat for column 1
-        rowA = _mm_set1_ps(A[i * size + (1*size + 1)]);
-        vecB = _mm_loadu_ps(B + (1 * size) + 1);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-        // repeat for column 2
-        rowA = _mm_set1_ps(A[i * size + (1*size + 2)]);
-        vecB = _mm_loadu_ps(B + (2 * size) + 1*size);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-        // repeat for column 3
-        rowA = _mm_set1_ps(A[i * size + (1*size + 3)]);
-        vecB = _mm_loadu_ps(B + (3 * size) + 1*size);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    result = _mm_setzero_ps();
 
-        // store the result vector to the current position in matrix C
-        _mm_storeu_ps(C + i * size + 1*size, result);
+    rowA = _mm_set1_ps(A[2 * size + 0]);
+    vecB = _mm_loadu_ps(B + (0 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 1
+    rowA = _mm_set1_ps(A[2 * size + 1]);
+    vecB = _mm_loadu_ps(B + (1 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 2
+    rowA = _mm_set1_ps(A[2 * size + 2]);
+    vecB = _mm_loadu_ps(B + (2 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 3
+    rowA = _mm_set1_ps(A[2 * size + 3]);
+    vecB = _mm_loadu_ps(B + (3 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
 
-        // load column 0 from the current row of A and fill a vector
-        rowA = _mm_set1_ps(A[i * size + 2*size]);
+    // store the result vector to the current position in matrix C
+    _mm_storeu_ps(C + 2 * size, result);
 
-        // load a vector from the current column of B
-        vecB = _mm_loadu_ps(B + 2*size);
+    result = _mm_setzero_ps();
 
-        // multiply the rowA vector with the loaded vecB vector element-wise
-        result = _mm_mul_ps(rowA, vecB);
+    rowA = _mm_set1_ps(A[3 * size + 0]);
+    vecB = _mm_loadu_ps(B + (0 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 1
+    rowA = _mm_set1_ps(A[3 * size + 1]);
+    vecB = _mm_loadu_ps(B + (1 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 2
+    rowA = _mm_set1_ps(A[3 * size + 2]);
+    vecB = _mm_loadu_ps(B + (2 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+    // repeat for column 3
+    rowA = _mm_set1_ps(A[3 * size + 3]);
+    vecB = _mm_loadu_ps(B + (3 * size));
+    result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
 
-        // repeat for column 1
-        rowA = _mm_set1_ps(A[i * size + (2*size + 1)]);
-        vecB = _mm_loadu_ps(B + (1 * size) + 2*size);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-        // repeat for column 2
-        rowA = _mm_set1_ps(A[i * size + (2*size + 2)]);
-        vecB = _mm_loadu_ps(B + (2 * size) + 2*size);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-        // repeat for column 3
-        rowA = _mm_set1_ps(A[i * size + (2*size + 3)]);
-        vecB = _mm_loadu_ps(B + (3 * size) + 2*size);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-
-        // store the result vector to the current position in matrix C
-        _mm_storeu_ps(C + i * size + 2*size, result);
-
-        // load column 0 from the current row of A and fill a vector
-        rowA = _mm_set1_ps(A[i * size + 3*size]);
-
-        // load a vector from the current column of B
-        vecB = _mm_loadu_ps(B + 3*size);
-
-        // multiply the rowA vector with the loaded vecB vector element-wise
-        result = _mm_mul_ps(rowA, vecB);
-
-        // repeat for column 1
-        rowA = _mm_set1_ps(A[i * size + (3*size + 1)]);
-        vecB = _mm_loadu_ps(B + (1 * size) + 3*size);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-        // repeat for column 2
-        rowA = _mm_set1_ps(A[i * size + 3*size + 2]);
-        vecB = _mm_loadu_ps(B + (2 * size) + 3*size);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-        // repeat for column 3
-        rowA = _mm_set1_ps(A[i * size + (3*size + 3)]);
-        vecB = _mm_loadu_ps(B + (3 * size) + 3*size);
-        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-
-        // store the result vector to the current position in matrix C
-        _mm_storeu_ps(C + i * size + 3*size, result);
-    }
+    // store the result vector to the current position in matrix C
+    _mm_storeu_ps(C + 3 * size, result);
 }
 
 // function to perform matrix multiplication without vectorization

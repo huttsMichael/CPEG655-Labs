@@ -16,27 +16,26 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
     // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
         // iterate over each column of matrix B 
-        for (int j = 0; j < size; j += size) {
-            __m128 rowA, vecB;
-            __m128 result = _mm_setzero_ps();
-            for (int k = 0; k < 4; k++) {
-                // load a single element from the current row of A and fill a vector
-                rowA = _mm_set1_ps(A[i * size + j + k]);
-                // load a vector from the current column of B
-                vecB = _mm_loadu_ps(B + k * size + j);
+        __m128 rowA, vecB;
+        __m128 result = _mm_setzero_ps();
+        for (int k = 0; k < 4; k++) {
+            // load a single element from the current row of A and fill a vector
+            rowA = _mm_set1_ps(A[i * size + k]);
+            // load a vector from the current column of B
+            vecB = _mm_loadu_ps(B + k * size);
 
-                // multiply the rowA vector with the loaded vecB vector element-wise and add to the result
-                result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-            }
-
-            // store the result vector to the current position in matrix C
-            _mm_storeu_ps(C + i * size + j, result);
+            // multiply the rowA vector with the loaded vecB vector element-wise and add to the result
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
         }
+
+        // store the result vector to the current position in matrix C
+        _mm_storeu_ps(C + i * size, result);
     }
 }
 
 // function to perform matrix multiplication without vectorization
 void matrixMultiply(const float* A, const float* B, float* C, int size) {
+    std::cout << "\nCPU:";
     // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
         // iterate over each column of matrix B
@@ -47,11 +46,13 @@ void matrixMultiply(const float* A, const float* B, float* C, int size) {
             // iterate over each element in the row of A and column of B
             for (int k = 0; k < size; k++) {
                 // multiply the corresponding elements and accumulate the result in the sum
+                std::cout << "(" << i << "," << j << "," << k << ") ";
                 sum += A[i * size + k] * B[k * size + j];
             }
 
             // store the accumulated sum in the current position of matrix C
             C[i * size + j] = sum;
+            std::cout << std::endl;
         }
     }
 }
