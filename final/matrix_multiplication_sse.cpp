@@ -17,8 +17,7 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
     for (int i = 0; i < size; i++) {
         // iterate over each column of matrix B 
         for (int j = 0; j < size; j += size) {
-            __m128 rowA;
-            __m128 vecB;
+            __m128 rowA, vecB;
             __m128 result = _mm_setzero_ps();
             for (int k = 0; k < 4; k++) {
                 // load a single element from the current row of A and fill a vector
