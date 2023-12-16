@@ -26,14 +26,19 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
             // multiply the rowA vector with the loaded vecB vector element-wise
             __m128 result = _mm_mul_ps(rowA, vecB);
 
-            // perform the same operation for the remaining elements in the row and column (better way to do this?)
-            for (int k = 1; k < 4; k++) {
-                rowA = _mm_set1_ps(A[i * size + j + k]);
-                vecB = _mm_loadu_ps(B + k * size + j);
+            // column 1
+            rowA = _mm_set1_ps(A[i * size + j + 1]);
+            vecB = _mm_loadu_ps(B + 1 * size + j);
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+            // column 2
+            rowA = _mm_set1_ps(A[i * size + j + 2]);
+            vecB = _mm_loadu_ps(B + 2 * size + j);
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+            // column 3
+            rowA = _mm_set1_ps(A[i * size + j + 3]);
+            vecB = _mm_loadu_ps(B + 3 * size + j);
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
 
-                // add the product to the result vector
-                result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-            }
 
             // store the result vector to the current position in matrix C
             _mm_storeu_ps(C + i * size + j, result);

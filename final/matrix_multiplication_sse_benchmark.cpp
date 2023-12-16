@@ -43,35 +43,39 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
 }
 
 // function to perform SSE-based matrix multiplication (unrolled)
-// void matrixMultiplySSEUnrolled(float* A, float* B, float* C, int size) {
-//     for (int i = 0; i < size; i++) {
-//         for (int j = 0; j < size; j += 4) {
-//             __m128 rowA0 = _mm_set1_ps(A[i * size + j]);
-//             __m128 vecB0 = _mm_loadu_ps(B + j);
-//             __m128 result0 = _mm_mul_ps(rowA0, vecB0);
+void matrixMultiplySSEUnrolled(float* A, float* B, float* C, int size) {
+    // iterate over each row of matrix A
+    for (int i = 0; i < size; i++) {
+        // iterate over each column of matrix B (assumes size is a multiple of 4)
+        for (int j = 0; j < size; j += 4) {
+            // load a single element from the current row of A and fill a vector
+            __m128 rowA = _mm_set1_ps(A[i * size + j]);
 
-//             __m128 rowA1 = _mm_set1_ps(A[i * size + j + 1]);
-//             __m128 vecB1 = _mm_loadu_ps(B + (j + 1));
-//             __m128 result1 = _mm_mul_ps(rowA1, vecB1);
+            // load a vector from the current column of B
+            __m128 vecB = _mm_loadu_ps(B + j);
 
-//             __m128 rowA2 = _mm_set1_ps(A[i * size + j + 2]);
-//             __m128 vecB2 = _mm_loadu_ps(B + (j + 2));
-//             __m128 result2 = _mm_mul_ps(rowA2, vecB2);
+            // multiply the rowA vector with the loaded vecB vector element-wise
+            __m128 result = _mm_mul_ps(rowA, vecB);
 
-//             __m128 rowA3 = _mm_set1_ps(A[i * size + j + 3]);
-//             __m128 vecB3 = _mm_loadu_ps(B + (j + 3));
-//             __m128 result3 = _mm_mul_ps(rowA3, vecB3);
+            // column 1
+            rowA = _mm_set1_ps(A[i * size + j + 1]);
+            vecB = _mm_loadu_ps(B + 1 * size + j);
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+            // column 2
+            rowA = _mm_set1_ps(A[i * size + j + 2]);
+            vecB = _mm_loadu_ps(B + 2 * size + j);
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+            // column 3
+            rowA = _mm_set1_ps(A[i * size + j + 3]);
+            vecB = _mm_loadu_ps(B + 3 * size + j);
+            result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
 
-//             // accumulate results
-//             result0 = _mm_add_ps(result0, result1);
-//             result2 = _mm_add_ps(result2, result3);
-//             result0 = _mm_add_ps(result0, result2);
 
-//             // store the result
-//             _mm_storeu_ps(C + i * size + j, result0);
-//         }
-//     }
-// }
+            // store the result vector to the current position in matrix C
+            _mm_storeu_ps(C + i * size + j, result);
+        }
+    }
+}
 
 // function to perform matrix multiplication without vectorization
 void matrixMultiply(const float* A, const float* B, float* C, int size) {
@@ -118,7 +122,7 @@ int main() {
     initializeRandomMatrix(B, size);
 
     float C_sse[size * size] = {0.0};
-    // float C_sse_unrolled[size * size] = {0.0};
+    float C_sse_unrolled[size * size] = {0.0};
     float C_non_sse[size * size] = {0.0};
 
     // measure SSE-based matrix multiplication time
@@ -131,13 +135,13 @@ int main() {
     double avg_duration_sse = duration_sse / num_repeats * 1e6; // convert to microseconds
 
     // measure SSE-based matrix multiplication with unrolled innermost loop time
-    // clock_t start_sse_unrolled = clock();
-    // for (int i = 0; i < num_repeats; ++i) {
-    //     matrixMultiplySSEUnrolled(A, B, C_sse_unrolled, size);
-    // }
-    // clock_t stop_sse_unrolled = clock();
-    // double duration_sse_unrolled = static_cast<double>(stop_sse_unrolled - start_sse_unrolled) / CLOCKS_PER_SEC;
-    // double avg_duration_sse_unrolled = duration_sse_unrolled / num_repeats * 1e6; // convert to microseconds
+    clock_t start_sse_unrolled = clock();
+    for (int i = 0; i < num_repeats; ++i) {
+        matrixMultiplySSEUnrolled(A, B, C_sse_unrolled, size);
+    }
+    clock_t stop_sse_unrolled = clock();
+    double duration_sse_unrolled = static_cast<double>(stop_sse_unrolled - start_sse_unrolled) / CLOCKS_PER_SEC;
+    double avg_duration_sse_unrolled = duration_sse_unrolled / num_repeats * 1e6; // convert to microseconds
 
     // measure non-SSE matrix multiplication time
     clock_t start_non_sse = clock();
@@ -159,9 +163,9 @@ int main() {
     printMatrix(C_sse, size, size);
     std::cout << "Average time taken by SSE-based matrix multiplication: " << avg_duration_sse << " microseconds\n\n";
 
-    // std::cout << "SSE-based Matrix Multiplication (Unrolled) Result:\n";
-    // printMatrix(C_sse_unrolled, size, size);
-    // std::cout << "Average time taken by SSE-based matrix multiplication (Unrolled): " << avg_duration_sse_unrolled << " microseconds\n\n";
+    std::cout << "SSE-based Matrix Multiplication (Unrolled) Result:\n";
+    printMatrix(C_sse_unrolled, size, size);
+    std::cout << "Average time taken by SSE-based matrix multiplication (Unrolled): " << avg_duration_sse_unrolled << " microseconds\n\n";
 
     std::cout << "Non-SSE Matrix Multiplication Result:\n";
     printMatrix(C_non_sse, size, size);
