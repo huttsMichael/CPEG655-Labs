@@ -17,22 +17,17 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
     // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
         // iterate over each column of matrix B (assumes size is a multiple of 4)
-        for (int j = 0; j < size; j += 4) {
-            // load a single element from the current row of A and fill a vector
-            __m128 rowA = _mm_set1_ps(A[i * size + j]);
-
-            // load a vector from the current column of B
-            __m128 vecB = _mm_loadu_ps(B + j);
-
-            // multiply the rowA vector with the loaded vecB vector element-wise
-            __m128 result = _mm_mul_ps(rowA, vecB);
-
-            // perform the same operation for the remaining elements in the row and column (better way to do this?)
-            for (int k = 1; k < 4; k++) {
+        for (int j = 0; j < size; j += size) {
+            __m128 rowA;
+            __m128 vecB;
+            __m128 result = _mm_setzero_ps();
+            for (int k = 0; k < 4; k++) {
+                // load a single element from the current row of A and fill a vector
                 rowA = _mm_set1_ps(A[i * size + j + k]);
+                // load a vector from the current column of B
                 vecB = _mm_loadu_ps(B + k * size + j);
 
-                // add the product to the result vector
+                // multiply the rowA vector with the loaded vecB vector element-wise and add to the result
                 result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
             }
 
@@ -73,6 +68,111 @@ void matrixMultiplySSEUnrolled(float* A, float* B, float* C, int size) {
             // store the result vector to the current position in matrix C
             _mm_storeu_ps(C + i * size + j, result);
         }
+    }
+}
+
+void matrixMultiplySSEUnrolledExtreme(float* A, float* B, float* C, int size) {
+    // iterate over each row of matrix A
+    for (int i = 0; i < size; i++) {
+        // load column 0 from the current row of A and fill a vector
+        __m128 rowA = _mm_set1_ps(A[i * size]);
+
+        // load a vector from the current column of B
+        __m128 vecB = _mm_loadu_ps(B);
+
+        // multiply the rowA vector with the loaded vecB vector element-wise
+        __m128 result = _mm_mul_ps(rowA, vecB);
+
+        // repeat for column 1
+        rowA = _mm_set1_ps(A[i * size + 1]);
+        vecB = _mm_loadu_ps(B + (1 * size));
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        // repeat for column 2
+        rowA = _mm_set1_ps(A[i * size + 2]);
+        vecB = _mm_loadu_ps(B + (2 * size));
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        // repeat for column 3
+        rowA = _mm_set1_ps(A[i * size + 3]);
+        vecB = _mm_loadu_ps(B + (3 * size));
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+
+        // store the result vector to the current position in matrix C
+        _mm_storeu_ps(C + i * size, result);
+
+        // load column 0 from the current row of A and fill a vector
+        rowA = _mm_set1_ps(A[i * size + 1*size]);
+
+        // load a vector from the current column of B
+        vecB = _mm_loadu_ps(B + 1*size);
+
+        // multiply the rowA vector with the loaded vecB vector element-wise
+        result = _mm_mul_ps(rowA, vecB);
+
+        // repeat for column 1
+        rowA = _mm_set1_ps(A[i * size + (1*size + 1)]);
+        vecB = _mm_loadu_ps(B + (1 * size) + 1);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        // repeat for column 2
+        rowA = _mm_set1_ps(A[i * size + (1*size + 2)]);
+        vecB = _mm_loadu_ps(B + (2 * size) + 1*size);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        // repeat for column 3
+        rowA = _mm_set1_ps(A[i * size + (1*size + 3)]);
+        vecB = _mm_loadu_ps(B + (3 * size) + 1*size);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+
+        // store the result vector to the current position in matrix C
+        _mm_storeu_ps(C + i * size + 1*size, result);
+
+        // load column 0 from the current row of A and fill a vector
+        rowA = _mm_set1_ps(A[i * size + 2*size]);
+
+        // load a vector from the current column of B
+        vecB = _mm_loadu_ps(B + 2*size);
+
+        // multiply the rowA vector with the loaded vecB vector element-wise
+        result = _mm_mul_ps(rowA, vecB);
+
+        // repeat for column 1
+        rowA = _mm_set1_ps(A[i * size + (2*size + 1)]);
+        vecB = _mm_loadu_ps(B + (1 * size) + 2*size);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        // repeat for column 2
+        rowA = _mm_set1_ps(A[i * size + (2*size + 2)]);
+        vecB = _mm_loadu_ps(B + (2 * size) + 2*size);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        // repeat for column 3
+        rowA = _mm_set1_ps(A[i * size + (2*size + 3)]);
+        vecB = _mm_loadu_ps(B + (3 * size) + 2*size);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+
+        // store the result vector to the current position in matrix C
+        _mm_storeu_ps(C + i * size + 2*size, result);
+
+        // load column 0 from the current row of A and fill a vector
+        rowA = _mm_set1_ps(A[i * size + 3*size]);
+
+        // load a vector from the current column of B
+        vecB = _mm_loadu_ps(B + 3*size);
+
+        // multiply the rowA vector with the loaded vecB vector element-wise
+        result = _mm_mul_ps(rowA, vecB);
+
+        // repeat for column 1
+        rowA = _mm_set1_ps(A[i * size + (3*size + 1)]);
+        vecB = _mm_loadu_ps(B + (1 * size) + 3*size);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        // repeat for column 2
+        rowA = _mm_set1_ps(A[i * size + 3*size + 2]);
+        vecB = _mm_loadu_ps(B + (2 * size) + 3*size);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+        // repeat for column 3
+        rowA = _mm_set1_ps(A[i * size + (3*size + 3)]);
+        vecB = _mm_loadu_ps(B + (3 * size) + 3*size);
+        result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
+
+        // store the result vector to the current position in matrix C
+        _mm_storeu_ps(C + i * size + 3*size, result);
     }
 }
 
@@ -122,6 +222,7 @@ int main() {
 
     float C_sse[size * size] = {0.0};
     float C_sse_unrolled[size * size] = {0.0};
+    float C_sse_unrolled_extreme[size * size] = {0.0};
     float C_non_sse[size * size] = {0.0};
 
     // measure SSE-based matrix multiplication time
@@ -141,6 +242,16 @@ int main() {
     clock_t stop_sse_unrolled = clock();
     double duration_sse_unrolled = static_cast<double>(stop_sse_unrolled - start_sse_unrolled) / CLOCKS_PER_SEC;
     double avg_duration_sse_unrolled = duration_sse_unrolled / num_repeats * 1e6; // convert to microseconds
+
+    // measure SSE-based matrix multiplication with half unrolled loop time
+    clock_t start_sse_unrolled_extreme = clock();
+    for (int i = 0; i < num_repeats; ++i) {
+        matrixMultiplySSEUnrolledExtreme(A, B, C_sse_unrolled_extreme, size);
+    }
+    clock_t stop_sse_unrolled_extreme = clock();
+    double duration_sse_unrolled_extreme = static_cast<double>(stop_sse_unrolled_extreme - start_sse_unrolled_extreme) / CLOCKS_PER_SEC;
+    double avg_duration_sse_unrolled_extreme = duration_sse_unrolled_extreme / num_repeats * 1e6; // convert to microseconds
+
 
     // measure non-SSE matrix multiplication time
     clock_t start_non_sse = clock();
@@ -165,6 +276,10 @@ int main() {
     std::cout << "SSE-based Matrix Multiplication (Unrolled) Result:\n";
     printMatrix(C_sse_unrolled, size, size);
     std::cout << "Average time taken by SSE-based matrix multiplication (Unrolled): " << avg_duration_sse_unrolled << " microseconds\n\n";
+
+    std::cout << "SSE-based Matrix Multiplication (Unrolled Extreme) Result:\n";
+    printMatrix(C_sse_unrolled_extreme, size, size);
+    std::cout << "Average time taken by SSE-based matrix multiplication (Unrolled Extreme): " << avg_duration_sse_unrolled_extreme << " microseconds\n\n";
 
     std::cout << "Non-SSE Matrix Multiplication Result:\n";
     printMatrix(C_non_sse, size, size);
