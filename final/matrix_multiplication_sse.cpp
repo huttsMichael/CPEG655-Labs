@@ -15,9 +15,9 @@ void initializeRandomMatrix(float* matrix, int size) {
 void matrixMultiplySSE(float* A, float* B, float* C, int size) {
     // iterate over each row of matrix A
     for (int i = 0; i < size; i++) {
-        // iterate over each column of matrix B (assumes size is a multiple of 4)
-        for (int j = 0; j < size; j += 4) {
-            // load a single element from the current row of A and fill a vector
+        // iterate over each column of matrix B
+        for (int j = 0; j < size; j += size) {
+            // load column 0 from the current row of A and fill a vector
             __m128 rowA = _mm_set1_ps(A[i * size + j]);
 
             // load a vector from the current column of B
@@ -26,19 +26,18 @@ void matrixMultiplySSE(float* A, float* B, float* C, int size) {
             // multiply the rowA vector with the loaded vecB vector element-wise
             __m128 result = _mm_mul_ps(rowA, vecB);
 
-            // column 1
-            rowA = _mm_set1_ps(A[i * size + j + 1]);
-            vecB = _mm_loadu_ps(B + 1 * size + j);
+            // repeat for column 1
+            rowA = _mm_set1_ps(A[i * size + (j + 1)]);
+            vecB = _mm_loadu_ps(B + (1 * size) + j);
             result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-            // column 2
+            // repeat for column 2
             rowA = _mm_set1_ps(A[i * size + j + 2]);
-            vecB = _mm_loadu_ps(B + 2 * size + j);
+            vecB = _mm_loadu_ps(B + (2 * size) + j);
             result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-            // column 3
-            rowA = _mm_set1_ps(A[i * size + j + 3]);
-            vecB = _mm_loadu_ps(B + 3 * size + j);
+            // repeat for column 3
+            rowA = _mm_set1_ps(A[i * size + (j + 3)]);
+            vecB = _mm_loadu_ps(B + (3 * size) + j);
             result = _mm_add_ps(result, _mm_mul_ps(rowA, vecB));
-
 
             // store the result vector to the current position in matrix C
             _mm_storeu_ps(C + i * size + j, result);
